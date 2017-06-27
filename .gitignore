@@ -1,0 +1,60 @@
+
+# golang
+pkg/
+/bin/
+*.prof
+*.mprof
+*.coverprofile
+*.test
+
+# macOS
+.DS_Store
+
+# jetbrains
+.idea
+
+# bosh
+.blobs
+blobs
+.dev_builds
+dev_releases
+config/dev.yml
+config/private.yml
+releases/*.tgz
+releases/**/*.tgz
+
+# tools
+/src/golang.org/x/tools/
+/src/github.com/square/certstrap
+/src/github.com/client9/misspell
+/src/github.com/mdempsky/unconvert
+/src/github.com/tsenart/deadcode
+/src/github.com/golang/lint
+/src/github.com/opennota/check
+/src/github.com/kisielk/errcheck
+/src/github.com/gordonklaus/ineffassign
+/src/github.com/mvdan/interfacer
+/src/github.com/mvdan/lint
+/src/github.com/rogpeppe/godef
+/src/github.com/alecthomas/gometalinter
+/src/github.com/dominikh/go-tools
+/src/github.com/kisielk/gotool
+/src/github.com/nsf/gocode
+/src/honnef.co/go
+
+# misc
+out/
+*/**/test_assets/stdout.log
+release/
+*/bin
+*.iml
+*.pem
+src/github.com/vito/gosub
+src/github.com/codegangsta/cli
+src/github.com/square/certstrap
+src/github.com/jteeuwen/go-bindata
+src/github.com/fatih/
+src/github.com/josharian/
+src/github.com/jstemmer/
+src/github.com/klauspost/
+src/github.com/zmb3/

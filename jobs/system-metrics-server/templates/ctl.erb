@@ -1,0 +1,38 @@
+#!/bin/bash
+
+RUN_DIR=/var/vcap/sys/run/system-metrics-server
+LOG_DIR=/var/vcap/sys/log/system-metrics-server
+PIDFILE=${RUN_DIR}/system-metrics-server.pid
+JOB_DIR=/var/vcap/jobs/system-metrics-server
+
+PACKAGE_DIR=/var/vcap/packages/system-metrics-server
+
+case $1 in
+
+start)
+mkdir -p $RUN_DIR $LOG_DIR
+chown -R vcap:vcap $RUN_DIR $LOG_DIR
+
+cd $PACKAGE_DIR
+
+ulimit -n 8192
+
+
+echo $$ > $PIDFILE
+exec chpst -u vcap:vcap ./system-metrics-server \
+  &>> ${LOG_DIR}/system-metrics-server.log
+
+;;
+
+stop)
+
+kill `cat $PIDFILE`
+
+rm -f $PIDFILE
+
+;;
+
+*)
+echo "Usage: ctl {start|stop}" ;;
+
+esac

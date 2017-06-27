@@ -1,0 +1,10 @@
+---
+name: system-metrics-server
+
+templates:
+  ctl.erb: bin/ctl
+
+packages:
+  - system-metrics-server
+
+properties: {}

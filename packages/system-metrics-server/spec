@@ -1,0 +1,7 @@
+---
+name: system-metrics-server
+
+dependencies:
+
+files:
+- bosh-system-metrics-server/*.go
