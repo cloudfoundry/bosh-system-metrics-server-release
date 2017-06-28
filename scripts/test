@@ -1,0 +1,5 @@
+#!/bin/bash
+
+pushd src/bosh-system-metrics-server
+go test ./... -race
+popd
