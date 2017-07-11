@@ -6,11 +6,13 @@ Package definitions is a generated protocol buffer package.
 
 It is generated from these files:
 	events.proto
+	server.proto
 
 It has these top-level messages:
 	Event
 	Heartbeat
 	Alert
+	EgressRequest
 */
 package definitions
 

@@ -134,17 +134,6 @@ func TestHeartbeatConversion(t *testing.T) {
 	}))
 }
 
-func TestInvalidEvent(t *testing.T) {
-	RegisterTestingT(t)
-
-	var heartbeatJSON = []byte(` { } `)
-
-	heartbeat, err := unmarshal.Event(heartbeatJSON)
-
-	Expect(heartbeat).To(BeNil())
-	Expect(err).To(HaveOccurred())
-}
-
 func TestAlertConversion(t *testing.T) {
 	RegisterTestingT(t)
 
@@ -178,4 +167,15 @@ func TestAlertConversion(t *testing.T) {
 			},
 		},
 	}))
+}
+
+func TestInvalidEvent(t *testing.T) {
+	RegisterTestingT(t)
+
+	var heartbeatJSON = []byte(` { } `)
+
+	heartbeat, err := unmarshal.Event(heartbeatJSON)
+
+	Expect(heartbeat).To(BeNil())
+	Expect(err).To(HaveOccurred())
 }
