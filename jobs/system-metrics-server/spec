@@ -3,8 +3,27 @@ name: system-metrics-server
 
 templates:
   ctl.erb: bin/ctl
+  server.crt.erb: config/certs/server.crt
+  server.key.erb: config/certs/server.key
 
 packages:
   - system-metrics-server
 
-properties: {}
+properties:
+  bosh.director.addr:
+    description: "The address and port of the director"
+    default: "localhost:25555"
+
+  port:
+    description: "The port which the grpc metrics server will listen on"
+    default: 25595
+
+  trusted_uaa_authority:
+    description: "The client authority required to connect"
+    default: "bosh.system.metrics"
+
+  tls.cert:
+    description: "The TLS certificate for this server"
+
+  tls.key:
+    description: "The TLS private key for this server"
