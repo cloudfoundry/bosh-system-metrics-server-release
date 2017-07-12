@@ -20,7 +20,7 @@ properties:
 
   trusted_uaa_authority:
     description: "The client authority required to connect"
-    default: "bosh.system.metrics"
+    default: "bosh.system_metrics.read"
 
   tls.cert:
     description: "The TLS certificate for this server"
