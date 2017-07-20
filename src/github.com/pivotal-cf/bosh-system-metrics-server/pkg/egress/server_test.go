@@ -1,6 +1,7 @@
 package egress_test
 
 import (
+	"errors"
 	"testing"
 
 	. "github.com/onsi/gomega"
@@ -8,12 +9,12 @@ import (
 	"github.com/pivotal-cf/bosh-system-metrics-server/pkg/egress"
 )
 
-func TestServerReturnsErrorWhenUnableToSend(t *testing.T) {
+func TestServerWritesEventSuccessfully(t *testing.T) {
 	RegisterTestingT(t)
 
 	messages := make(chan *definitions.Event, 100)
 	writer := newSpyWriter()
-	server := egress.NewServer(messages)
+	server := egress.NewServer(messages, writer)
 	go server.Start()
 
 	messages <- event
@@ -22,14 +23,39 @@ func TestServerReturnsErrorWhenUnableToSend(t *testing.T) {
 	Expect(writer.Messages).To(ContainElement(event))
 }
 
+func TestServerReturnsErrorWhenUnableToSend(t *testing.T) {
+	RegisterTestingT(t)
+
+	messages := make(chan *definitions.Event, 100)
+	writer := newSpyWriter()
+	writer.WriteError = errors.New("unable to send")
+	server := egress.NewServer(messages, writer)
+	go server.Start()
+
+	messages <- event
+
+	Expect(writer.Messages).To(BeEmpty())
+}
+
 type spyWriter struct {
-	Messages []*definitions.Event
+	Messages   []*definitions.Event
+	WriteError error
 }
 
 func newSpyWriter() *spyWriter {
 	return &spyWriter{
 		Messages: make([]*definitions.Event, 100),
 	}
+}
+
+func (w *spyWriter) Write(sender definitions.Egress_BoshMetricsServer, event *definitions.Event) error {
+
+	if w.WriteError != nil {
+		return w.WriteError
+	}
+
+	w.Messages = append(w.Messages, event)
+	return nil
 }
 
 var event = &definitions.Event{
