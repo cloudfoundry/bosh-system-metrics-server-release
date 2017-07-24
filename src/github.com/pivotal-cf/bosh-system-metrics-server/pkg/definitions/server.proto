@@ -1,0 +1,12 @@
+syntax = "proto3";
+package definitions;
+
+import "events.proto";
+
+service Egress {
+  rpc BoshMetrics(EgressRequest) returns (stream definitions.Event) {}
+}
+
+message EgressRequest {
+    string subscription_id = 1;
+}
