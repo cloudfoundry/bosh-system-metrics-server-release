@@ -7,4 +7,6 @@ service Egress {
   rpc BoshMetrics(EgressRequest) returns (stream definitions.Event) {}
 }
 
-message EgressRequest {}
+message EgressRequest {
+    string subscription_id = 1;
+}

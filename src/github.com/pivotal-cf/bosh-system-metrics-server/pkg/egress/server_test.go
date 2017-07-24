@@ -4,57 +4,69 @@ import (
 	"errors"
 	"testing"
 
+	"google.golang.org/grpc"
+
 	. "github.com/onsi/gomega"
 	"github.com/pivotal-cf/bosh-system-metrics-server/pkg/definitions"
 	"github.com/pivotal-cf/bosh-system-metrics-server/pkg/egress"
 )
 
-func TestServerWritesEventSuccessfully(t *testing.T) {
+func TestBoshMetricsWritesEventSuccessfully(t *testing.T) {
 	RegisterTestingT(t)
 
 	messages := make(chan *definitions.Event, 100)
-	writer := newSpyWriter()
-	server := egress.NewServer(messages, writer)
-	go server.Start()
+	sender := newSpyEgressSender()
+	server := egress.NewServer(messages)
+	req := &definitions.EgressRequest{SubscriptionId: "subscriptionA"}
+
+	go server.BoshMetrics(req, sender)
 
 	messages <- event
 
-	Expect(writer.Messages).To(HaveLen(1))
-	Expect(writer.Messages).To(ContainElement(event))
+	Eventually(sender.Received).Should(Receive(Equal(event)))
 }
 
-func TestServerReturnsErrorWhenUnableToSend(t *testing.T) {
+func TestBoshMetricsReturnsErrorWhenUnableToSend(t *testing.T) {
 	RegisterTestingT(t)
 
 	messages := make(chan *definitions.Event, 100)
-	writer := newSpyWriter()
-	writer.WriteError = errors.New("unable to send")
-	server := egress.NewServer(messages, writer)
-	go server.Start()
+	sender := newSpyEgressSender()
+	sender.SendError = errors.New("unable to send")
+	server := egress.NewServer(messages)
+	req := &definitions.EgressRequest{SubscriptionId: "subscriptionA"}
 
+	var returnErr error
+	done := make(chan struct{})
+	go func() {
+		returnErr = server.BoshMetrics(req, sender)
+		close(done)
+	}()
 	messages <- event
+	<-done
 
-	Expect(writer.Messages).To(BeEmpty())
+	Expect(sender.Received).To(BeEmpty())
+	Expect(returnErr).ToNot(BeNil())
 }
 
-type spyWriter struct {
-	Messages   []*definitions.Event
-	WriteError error
+// ------ SPIES ------
+type spyEgressSender struct {
+	Received  chan *definitions.Event
+	SendError error
+	grpc.ServerStream
 }
 
-func newSpyWriter() *spyWriter {
-	return &spyWriter{
-		Messages: make([]*definitions.Event, 100),
+func newSpyEgressSender() *spyEgressSender {
+	return &spyEgressSender{
+		Received: make(chan *definitions.Event, 100),
 	}
 }
 
-func (w *spyWriter) Write(sender definitions.Egress_BoshMetricsServer, event *definitions.Event) error {
-
-	if w.WriteError != nil {
-		return w.WriteError
+func (s *spyEgressSender) Send(e *definitions.Event) error {
+	if s.SendError != nil {
+		return s.SendError
 	}
 
-	w.Messages = append(w.Messages, event)
+	s.Received <- e
 	return nil
 }
 
