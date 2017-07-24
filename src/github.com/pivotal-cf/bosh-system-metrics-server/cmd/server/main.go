@@ -2,21 +2,22 @@ package main
 
 import (
 	"bufio"
-	"log"
 	"math/rand"
 	"os"
 	"time"
 
+	"github.com/pivotal-cf/bosh-system-metrics-server/pkg/definitions"
+	"github.com/pivotal-cf/bosh-system-metrics-server/pkg/egress"
 	"github.com/pivotal-cf/bosh-system-metrics-server/pkg/ingress"
 	"github.com/pivotal-cf/bosh-system-metrics-server/pkg/unmarshal"
 )
 
 func main() {
-	input := readFromStdIn()
 	rand.Seed(time.Now().UnixNano())
+	messages := make(chan *definitions.Event)
 
-	i, messages := ingress.New(input, unmarshal.Event)
-	e := egress.New(messages)
+	i := ingress.New(bufio.NewReader(os.Stdin), unmarshal.Event, messages)
+	e := egress.NewServer(messages)
 
 	stopReadingMessages := i.Start()
 	stopWritingMessages := e.Start()
@@ -25,28 +26,4 @@ func main() {
 		stopReadingMessages()
 		stopWritingMessages()
 	}()
-}
-
-func readFromStdIn() chan []byte {
-	input := make(chan []byte)
-
-	go func() {
-		r := bufio.NewReader(os.Stdin)
-		for {
-			line, err := r.ReadBytes('\n')
-			if err != nil {
-				log.Printf("Error reading from stdin: %s", err)
-				continue
-			}
-
-			input <- line
-			select {
-			case input <- line:
-			default:
-				log.Printf("dropped stdin json metric, not processing fast enough")
-			}
-		}
-	}()
-
-	return input
 }
