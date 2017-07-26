@@ -5,4 +5,4 @@ export PATH=$GOROOT/bin:$PATH
 export GOPATH=$PWD
 
 ln -s $GOPATH $GOPATH/src
-go build -o ${BOSH_INSTALL_TARGET}/system-metrics-server bosh-system-metrics-server
+go build -o ${BOSH_INSTALL_TARGET}/system-metrics-server github.com/pivotal-cf/bosh-system-metrics-server/cmd/server

@@ -20,6 +20,7 @@ ulimit -n 8192
 
 echo $$ > $PIDFILE
 exec chpst -u vcap:vcap ./system-metrics-server \
+  --port="<%= p('system_metrics_server.port') %>" \
   &>> ${LOG_DIR}/system-metrics-server.log
 
 ;;

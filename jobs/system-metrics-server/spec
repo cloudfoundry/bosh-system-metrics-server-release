@@ -14,16 +14,16 @@ properties:
     description: "The address and port of the director"
     default: "localhost:25555"
 
-  port:
+  system_metrics_server.port:
     description: "The port which the grpc metrics server will listen on"
     default: 25595
 
-  trusted_uaa_authority:
+  system_metrics_server.trusted_uaa_authority:
     description: "The client authority required to connect"
     default: "bosh.system_metrics.read"
 
-  tls.cert:
-    description: "The TLS certificate for this server"
+  system_metrics_server.tls.cert:
+    description: "The TLS certificate for the system metrics server"
 
-  tls.key:
-    description: "The TLS private key for this server"
+  system_metrics_server.tls.key:
+    description: "The TLS private key for the system metrics server"
