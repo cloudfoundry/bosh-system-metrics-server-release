@@ -4,8 +4,10 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"log"
+	"sync/atomic"
 	"testing"
 
 	. "github.com/onsi/gomega"
@@ -28,18 +30,32 @@ func TestEventProcessedUponSucessfulUnmarshal(t *testing.T) {
 	Eventually(messages).Should(Receive(Equal(event)))
 }
 
-func TestEventProcessingContinuesAfterReadError(t *testing.T) {
+func TestEventProcessingSleepsAfterEOFError(t *testing.T) {
 	RegisterTestingT(t)
 
 	fakeUnmarshaller := newFakeUnmarshaller()
 	fakeUnmarshaller.on("success\n", event)
-	reader := newFakeErrorReader()
+	reader := newSpyReader([]byte{}, io.EOF)
 	messages := make(chan *definitions.Event, 100)
 	ingestor := ingress.New(reader, fakeUnmarshaller.f, messages)
 
 	defer ingestor.Start()()
 
-	Consistently(messages).Should(BeEmpty())
+	Eventually(reader.CallCount, "2s").Should(Equal(int64(2)))
+}
+
+func TestEventProcessingContinuesAfterReadError(t *testing.T) {
+	RegisterTestingT(t)
+
+	fakeUnmarshaller := newFakeUnmarshaller()
+	fakeUnmarshaller.on("success\n", event)
+	reader := newSpyReader([]byte{}, errors.New("some other err"))
+	messages := make(chan *definitions.Event, 100)
+	ingestor := ingress.New(reader, fakeUnmarshaller.f, messages)
+
+	defer ingestor.Start()()
+
+	Eventually(reader.CallCount).Should(BeNumerically(">", 1))
 }
 
 func TestEventProcessingContinuesAfterUnmarshallError(t *testing.T) {
@@ -126,12 +142,24 @@ func (f *fakeUnmarshaller) f(b []byte) (*definitions.Event, error) {
 	return evt, nil
 }
 
-type fakeReader struct{}
-
-func newFakeErrorReader() *fakeReader {
-	return &fakeReader{}
+type spyReader struct {
+	callCount int64
+	bytes     []byte
+	err       error
 }
 
-func (r *fakeReader) ReadBytes(byte) ([]byte, error) {
-	return nil, errors.New("read error")
+func newSpyReader(b []byte, e error) *spyReader {
+	return &spyReader{
+		bytes: b,
+		err:   e,
+	}
+}
+
+func (r *spyReader) ReadBytes(byte) ([]byte, error) {
+	atomic.AddInt64(&r.callCount, 1)
+	return r.bytes, r.err
+}
+
+func (r *spyReader) CallCount() int64 {
+	return atomic.LoadInt64(&r.callCount)
 }

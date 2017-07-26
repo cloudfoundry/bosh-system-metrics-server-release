@@ -1,7 +1,9 @@
 package ingress
 
 import (
+	"io"
 	"log"
+	"time"
 
 	"github.com/pivotal-cf/bosh-system-metrics-server/pkg/definitions"
 )
@@ -33,6 +35,10 @@ func (i *Ingestor) Start() func() {
 	go func() {
 		for {
 			b, err := i.reader.ReadBytes('\n')
+			if err == io.EOF {
+				time.Sleep(time.Second)
+				continue
+			}
 			if err != nil {
 				log.Printf("Error reading: %s", err)
 				continue
