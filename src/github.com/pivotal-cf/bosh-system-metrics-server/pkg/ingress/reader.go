@@ -1,64 +1,83 @@
 package ingress
 
 import (
-	"io"
+	"bufio"
+	"fmt"
 	"log"
-	"time"
+	"net"
 
 	"github.com/pivotal-cf/bosh-system-metrics-server/pkg/definitions"
 )
 
 type unmarshaller func(eventJSON []byte) (*definitions.Event, error)
 
-type reader interface {
-	ReadBytes(delim byte) ([]byte, error)
-}
-
 type Ingestor struct {
-	reader       reader
+	port         int
 	unmarshaller unmarshaller
 	output       chan *definitions.Event
 }
 
-func New(r reader, u unmarshaller, m chan *definitions.Event) *Ingestor {
+func New(p int, u unmarshaller, m chan *definitions.Event) *Ingestor {
 	return &Ingestor{
-		reader:       r,
+		port:         p,
 		unmarshaller: u,
 		output:       m,
 	}
 }
 
 func (i *Ingestor) Start() func() {
-
 	stop := make(chan struct{})
+	ingressLis, err := net.Listen("tcp", fmt.Sprintf(":%d", i.port))
+	if err != nil {
+		log.Fatalf("failed to listen on port %d: %v", i.port, err)
+	}
+	log.Printf("ingestor listening on %s", ingressLis.Addr().String())
 
 	go func() {
 		for {
-			b, err := i.reader.ReadBytes('\n')
-			if err == io.EOF {
-				time.Sleep(time.Second)
-				continue
-			}
+			conn, err := ingressLis.Accept()
 			if err != nil {
-				log.Printf("Error reading: %s", err)
-				continue
-			}
-
-			evt, err := i.unmarshaller(b)
-			if err != nil {
-				log.Printf("Error unmarshalling: %s", err)
-				continue
-			}
-
-			select {
-			case <-stop:
 				return
-			case i.output <- evt:
 			}
+
+			go i.handleConnection(conn, stop)
 		}
 	}()
 
 	return func() {
+		ingressLis.Close()
 		close(stop)
+	}
+}
+
+func (i *Ingestor) handleConnection(conn net.Conn, stop chan struct{}) {
+	reader := bufio.NewReader(conn)
+	for {
+		b, err := reader.ReadBytes('\n')
+		if err != nil {
+			log.Printf("Error reading: %s", err)
+			return
+		}
+
+		evt, err := i.unmarshaller(b)
+		if err != nil {
+			log.Printf("Error unmarshalling: %s", err)
+			continue
+		}
+
+		if shouldStop(stop) {
+			return
+		} else {
+			i.output <- evt
+		}
+	}
+}
+
+func shouldStop(s chan struct{}) bool {
+	select {
+	case <-s:
+		return true
+	default:
+		return false
 	}
 }

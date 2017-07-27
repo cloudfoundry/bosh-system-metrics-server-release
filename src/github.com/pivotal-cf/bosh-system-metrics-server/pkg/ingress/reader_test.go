@@ -1,12 +1,11 @@
 package ingress_test
 
 import (
-	"bytes"
 	"errors"
 	"fmt"
-	"io"
 	"io/ioutil"
 	"log"
+	"net"
 	"sync/atomic"
 	"testing"
 
@@ -15,78 +14,74 @@ import (
 	"github.com/pivotal-cf/bosh-system-metrics-server/pkg/ingress"
 )
 
-func TestEventProcessedUponSucessfulUnmarshal(t *testing.T) {
+func TestStartProcessesMessages(t *testing.T) {
 	RegisterTestingT(t)
 	log.SetOutput(ioutil.Discard)
 
+	port := 25596
 	fakeUnmarshaller := newFakeUnmarshaller()
 	fakeUnmarshaller.on("success\n", event)
-	reader := bytes.NewBufferString("success\n")
 	messages := make(chan *definitions.Event, 100)
-	ingestor := ingress.New(reader, fakeUnmarshaller.f, messages)
+	ingestor := ingress.New(port, fakeUnmarshaller.f, messages)
 
 	defer ingestor.Start()()
+
+	conn, err := net.Dial("tcp", "127.0.0.1:25596")
+	Expect(err).ToNot(HaveOccurred())
+	defer conn.Close()
+	_, err = conn.Write([]byte("success\n"))
+	Expect(err).ToNot(HaveOccurred())
 
 	Eventually(messages).Should(Receive(Equal(event)))
 }
 
-func TestEventProcessingSleepsAfterEOFError(t *testing.T) {
+func TestStartContinuesAfterUnmarshallError(t *testing.T) {
 	RegisterTestingT(t)
+	log.SetOutput(ioutil.Discard)
 
-	fakeUnmarshaller := newFakeUnmarshaller()
-	fakeUnmarshaller.on("success\n", event)
-	reader := newSpyReader([]byte{}, io.EOF)
-	messages := make(chan *definitions.Event, 100)
-	ingestor := ingress.New(reader, fakeUnmarshaller.f, messages)
-
-	defer ingestor.Start()()
-
-	Eventually(reader.CallCount, "2s").Should(Equal(int64(2)))
-}
-
-func TestEventProcessingContinuesAfterReadError(t *testing.T) {
-	RegisterTestingT(t)
-
-	fakeUnmarshaller := newFakeUnmarshaller()
-	fakeUnmarshaller.on("success\n", event)
-	reader := newSpyReader([]byte{}, errors.New("some other err"))
-	messages := make(chan *definitions.Event, 100)
-	ingestor := ingress.New(reader, fakeUnmarshaller.f, messages)
-
-	defer ingestor.Start()()
-
-	Eventually(reader.CallCount).Should(BeNumerically(">", 1))
-}
-
-func TestEventProcessingContinuesAfterUnmarshallError(t *testing.T) {
-	RegisterTestingT(t)
-
+	port := 25597
 	fakeUnmarshaller := newFakeUnmarshaller()
 	fakeUnmarshaller.failOn("bad-json\n", errors.New("invalid json"))
-	reader := bytes.NewBufferString("bad-json\n")
+	fakeUnmarshaller.on("success\n", event)
 	messages := make(chan *definitions.Event, 100)
-	ingestor := ingress.New(reader, fakeUnmarshaller.f, messages)
+	ingestor := ingress.New(port, fakeUnmarshaller.f, messages)
 
 	defer ingestor.Start()()
 
-	Consistently(messages).Should(BeEmpty())
+	conn, err := net.Dial("tcp", "127.0.0.1:25597")
+	Expect(err).ToNot(HaveOccurred())
+	defer conn.Close()
+	_, err = conn.Write([]byte("bad-json\n"))
+	Expect(err).ToNot(HaveOccurred())
+	_, err = conn.Write([]byte("success\n"))
+	Expect(err).ToNot(HaveOccurred())
+
+	Eventually(messages).Should(Receive(Equal(event)))
 }
 
 func TestEventProcessingStopsAfterStoppingIngestor(t *testing.T) {
 	RegisterTestingT(t)
 	log.SetOutput(ioutil.Discard)
 
+	port := 25596
 	fakeUnmarshaller := newFakeUnmarshaller()
 	fakeUnmarshaller.on("success\n", event)
-	reader := bytes.NewBufferString("success\n")
 	messages := make(chan *definitions.Event, 100)
-	ingestor := ingress.New(reader, fakeUnmarshaller.f, messages)
+	ingestor := ingress.New(port, fakeUnmarshaller.f, messages)
 
 	stop := ingestor.Start()
 
-	Eventually(messages).Should(HaveLen(1))
+	conn, err := net.Dial("tcp", "127.0.0.1:25596")
+	Expect(err).ToNot(HaveOccurred())
+	defer conn.Close()
+	_, err = conn.Write([]byte("success\n"))
+	Expect(err).ToNot(HaveOccurred())
+
 	<-messages
 	stop()
+
+	_, err = conn.Write([]byte("success\n"))
+	Expect(err).ToNot(HaveOccurred())
 
 	Consistently(messages).ShouldNot(Receive())
 	Expect(messages).To(BeEmpty())
@@ -105,6 +100,36 @@ var event = &definitions.Event{
 			Source:   "loggregator: log-api(6f721317-2399-4e38-b38c-9d1b213c2d67) [id=130a69f5-6da1-45ce-830e-31e9c856085a, index=0, cid=b5df1c77-2c91-4093-6fc5-1cf2cba72471]",
 		},
 	},
+}
+
+type fakeListener struct {
+	closeCallCount  int64
+	acceptCallCount int64
+	conn            net.Conn
+	err             error
+}
+
+func newFakeListener(c net.Conn, e error) *fakeListener {
+	return &fakeListener{
+		conn: c,
+		err:  e,
+	}
+}
+
+func (l *fakeListener) Accept() (net.Conn, error) {
+	atomic.AddInt64(&l.acceptCallCount, 1)
+	return l.conn, l.err
+}
+
+func (l *fakeListener) AcceptCallCount() int64 {
+	return atomic.LoadInt64(&l.acceptCallCount)
+}
+
+func (l *fakeListener) Close() error {
+	return nil
+}
+func (l *fakeListener) Addr() net.Addr {
+	return nil
 }
 
 type fakeUnmarshaller struct {

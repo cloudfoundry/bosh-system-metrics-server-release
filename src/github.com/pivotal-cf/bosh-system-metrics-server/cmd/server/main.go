@@ -1,13 +1,11 @@
 package main
 
 import (
-	"bufio"
 	"flag"
 	"fmt"
 	"log"
 	"math/rand"
 	"net"
-	"os"
 	"time"
 
 	"google.golang.org/grpc"
@@ -20,17 +18,18 @@ import (
 
 func main() {
 	rand.Seed(time.Now().UnixNano())
-	port := flag.Int("port", 25595, "The port which the grpc metrics server will listen on")
+	egressPort := flag.Int("egress-port", 25595, "The port which the grpc metrics server will listen on")
+	ingressPort := flag.Int("ingress-port", 25594, "The port listening for bosh system events")
 	flag.Parse()
 
-	lis, err := net.Listen("tcp", fmt.Sprintf(":%d", *port))
+	egressLis, err := net.Listen("tcp", fmt.Sprintf(":%d", *egressPort))
 	if err != nil {
-		log.Fatalf("failed to listen: %v", err)
+		log.Fatalf("failed to listen on port %d: %v", *egressPort, err)
 	}
 
 	messages := make(chan *definitions.Event)
 
-	i := ingress.New(bufio.NewReader(os.Stdin), unmarshal.Event, messages)
+	i := ingress.New(*ingressPort, unmarshal.Event, messages)
 	e := egress.NewServer(messages)
 
 	grpcServer := grpc.NewServer()
@@ -42,8 +41,12 @@ func main() {
 	defer func() {
 		stopReadingMessages()
 		stopWritingMessages()
+		egressLis.Close()
 	}()
 
-	log.Printf("bosh system metrics grpc server listening on %d\n", *port)
-	grpcServer.Serve(lis)
+	log.Printf("bosh system metrics grpc server listening on %s\n", egressLis.Addr().String())
+	err = grpcServer.Serve(egressLis)
+	if err != nil {
+		log.Fatalf("unable to serve grpc server: %s", err)
+	}
 }
