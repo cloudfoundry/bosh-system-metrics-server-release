@@ -31,5 +31,6 @@ function sync_package() {
 }
 
 sync_package system-metrics-server         -app  github.com/pivotal-cf/bosh-system-metrics-server/cmd/server &
+sync_package system-metrics-plugin         -app  github.com/pivotal-cf/bosh-system-metrics-server/cmd/plugin &
 
 wait

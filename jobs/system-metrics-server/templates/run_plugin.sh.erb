@@ -1,0 +1,5 @@
+#!/bin/bash
+
+PACKAGE_PATH=/var/vcap/packages/system-metrics-plugin
+LOG_DIR=/var/vcap/sys/log/system-metrics-server
+exec $PACKAGE_PATH/system-metrics-plugin --addr="<%= p('system_metrics_plugin.addr') %>" &>> ${LOG_DIR}/system-metrics-plugin.log

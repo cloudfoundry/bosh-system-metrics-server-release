@@ -1,0 +1,8 @@
+set -ex
+
+export GOROOT=$(readlink -nf /var/vcap/packages/golang1.8.3)
+export PATH=$GOROOT/bin:$PATH
+export GOPATH=$PWD
+
+ln -s $GOPATH $GOPATH/src
+go build -o ${BOSH_INSTALL_TARGET}/system-metrics-plugin github.com/pivotal-cf/bosh-system-metrics-server/cmd/plugin

@@ -5,9 +5,11 @@ templates:
   ctl.erb: bin/ctl
   server.crt.erb: config/certs/server.crt
   server.key.erb: config/certs/server.key
+  run_plugin.sh.erb: bin/bosh-monitor/run.sh
 
 packages:
   - system-metrics-server
+  - system-metrics-plugin
 
 properties:
   bosh.director.addr:
@@ -27,3 +29,8 @@ properties:
 
   system_metrics_server.tls.key:
     description: "The TLS private key for the system metrics server"
+
+  system_metrics_plugin.addr:
+    description: "The address and port of the system metrics server to send metrics to"
+    default: "localhost:25594"
+
