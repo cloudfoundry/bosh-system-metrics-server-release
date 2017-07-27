@@ -1,0 +1,53 @@
+- type: replace
+  path: /releases/-
+  value:
+    name: bosh-system-metrics-server
+    version: latest
+    url: file:///tmp/server-release.tgz
+
+# This job needs to run before health-monitor.
+- type: replace
+  path: /instance_groups/name=bosh/jobs
+  value:
+    - {name: nats, release: bosh}
+    - {name: postgres-9.4, release: bosh}
+    - {name: blobstore, release: bosh}
+    - {name: director, release: bosh}
+    - name: system-metrics-server
+      release: bosh-system-metrics-server
+      properties:
+        system_metrics_server:
+          tls:
+            cert: "((system_metrics_server_ssl.certificate))"
+            key: "((system_metrics_server_ssl.private_key))"
+        loggregator:
+          ca_cert: "((loggregator_metron.ca))"
+          cert: "((loggregator_metron.certificate))"
+          key: "((loggregator_metron.private_key))"
+    - {name: health_monitor, release: bosh}
+
+# - type: replace
+#   path: /instance_groups/name=bosh/jobs/name=uaa/properties/uaa/clients/system_metrics_client?
+#   value:
+#     override: true
+#     authorized-grant-types: client_credentials
+#     scope: ""
+#     authorities: bosh.system_metrics.read
+#     secret: ((system_metrics_uaa_client_secret))
+
+- type: replace
+  path: /variables/-
+  value:
+    name: system_metrics_uaa_client_secret
+    type: password
+
+- type: replace
+  path: /variables/-
+  value:
+    name: system_metrics_server_ssl
+    type: certificate
+    options:
+      ca: default_ca
+      common_name: ((internal_ip))
+      alternative_names: [((internal_ip))]
+
