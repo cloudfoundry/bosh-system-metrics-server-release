@@ -1,5 +1,5 @@
 #!/bin/bash
 
-pushd src/bosh-system-metrics-server
+pushd src/github.com/pivotal-cf/bosh-system-metrics-server
 go test ./... -race
 popd
