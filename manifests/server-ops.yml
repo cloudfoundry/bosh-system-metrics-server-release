@@ -20,10 +20,6 @@
           tls:
             cert: "((system_metrics_server_ssl.certificate))"
             key: "((system_metrics_server_ssl.private_key))"
-        loggregator:
-          ca_cert: "((loggregator_metron.ca))"
-          cert: "((loggregator_metron.certificate))"
-          key: "((loggregator_metron.private_key))"
     - {name: health_monitor, release: bosh}
 
 # - type: replace
