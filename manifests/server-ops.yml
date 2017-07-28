@@ -7,20 +7,21 @@
 
 # This job needs to run before health-monitor.
 - type: replace
-  path: /instance_groups/name=bosh/jobs
+  path: /instance_groups/name=bosh/jobs/name=health_monitor
   value:
-    - {name: nats, release: bosh}
-    - {name: postgres-9.4, release: bosh}
-    - {name: blobstore, release: bosh}
-    - {name: director, release: bosh}
-    - name: system-metrics-server
-      release: bosh-system-metrics-server
-      properties:
-        system_metrics_server:
-          tls:
-            cert: "((system_metrics_server_ssl.certificate))"
-            key: "((system_metrics_server_ssl.private_key))"
-    - {name: health_monitor, release: bosh}
+    name: system-metrics-server
+    release: bosh-system-metrics-server
+    properties:
+      system_metrics_server:
+        tls:
+          cert: "((system_metrics_server_ssl.certificate))"
+          key: "((system_metrics_server_ssl.private_key))"
+
+- type: replace
+  path: /instance_groups/name=bosh/jobs/-
+  value:
+    name: health_monitor
+    release: bosh
 
 # - type: replace
 #   path: /instance_groups/name=bosh/jobs/name=uaa/properties/uaa/clients/system_metrics_client?
