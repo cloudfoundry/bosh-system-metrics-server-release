@@ -14,6 +14,7 @@
     properties:
       system_metrics_server:
         tls:
+          ca: "((system_metrics_server_ssl.ca))"
           cert: "((system_metrics_server_ssl.certificate))"
           key: "((system_metrics_server_ssl.private_key))"
 
@@ -23,14 +24,14 @@
     name: health_monitor
     release: bosh
 
-# - type: replace
-#   path: /instance_groups/name=bosh/jobs/name=uaa/properties/uaa/clients/system_metrics_client?
-#   value:
-#     override: true
-#     authorized-grant-types: client_credentials
-#     scope: ""
-#     authorities: bosh.system_metrics.read
-#     secret: ((system_metrics_uaa_client_secret))
+ - type: replace
+   path: /instance_groups/name=bosh/jobs/name=uaa/properties/uaa/clients/system_metrics_client?
+   value:
+     override: true
+     authorized-grant-types: client_credentials
+     scope: ""
+     authorities: bosh.system_metrics.read
+     secret: ((system_metrics_uaa_client_secret))
 
 - type: replace
   path: /variables/-
