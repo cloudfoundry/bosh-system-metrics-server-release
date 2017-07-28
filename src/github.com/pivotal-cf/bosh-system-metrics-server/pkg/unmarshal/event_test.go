@@ -87,36 +87,6 @@ func TestHeartbeatConversion(t *testing.T) {
 				Index:      4,
 				InstanceId: "6f60a3ce-9e4d-477f-ba45-7d29bcfab5b9",
 				JobState:   "running",
-				Vitals: &definitions.Heartbeat_Vitals{
-					Cpu: &definitions.Heartbeat_Vitals_Cpu{
-						Sys:  3.2,
-						User: 2.5,
-						Wait: 0.0,
-					},
-					Disk: &definitions.Heartbeat_Vitals_Disk{
-						Ephemeral: &definitions.Heartbeat_Vitals_Disk_DiskUsage{
-							InodePercent: 2,
-							Percent:      4,
-						},
-						Persistent: &definitions.Heartbeat_Vitals_Disk_DiskUsage{
-							InodePercent: 2,
-							Percent:      4,
-						},
-						System: &definitions.Heartbeat_Vitals_Disk_DiskUsage{
-							InodePercent: 14,
-							Percent:      23,
-						},
-					},
-					Load: []float32{0.18, 0.23, 0.29},
-					Mem: &definitions.Heartbeat_Vitals_MemUsage{
-						Kb:      1139140,
-						Percent: 28,
-					},
-					Swap: &definitions.Heartbeat_Vitals_MemUsage{
-						Kb:      9788,
-						Percent: 2,
-					},
-				},
 				Metrics: []*definitions.Heartbeat_Metric{
 					{
 						Name:      "system.load.1m",
