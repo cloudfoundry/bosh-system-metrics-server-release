@@ -6,6 +6,8 @@ import (
 	"log"
 	"net"
 
+	"expvar"
+
 	"github.com/pivotal-cf/bosh-system-metrics-server/pkg/definitions"
 )
 
@@ -15,6 +17,14 @@ type Ingestor struct {
 	port         int
 	unmarshaller unmarshaller
 	output       chan *definitions.Event
+}
+
+var (
+	ingressReceived *expvar.Int
+)
+
+func init() {
+	ingressReceived = expvar.NewInt("ingress.received")
 }
 
 func New(p int, u unmarshaller, m chan *definitions.Event) *Ingestor {
@@ -69,6 +79,7 @@ func (i *Ingestor) handleConnection(conn net.Conn, stop chan struct{}) {
 			return
 		} else {
 			i.output <- evt
+			ingressReceived.Add(1)
 		}
 	}
 }

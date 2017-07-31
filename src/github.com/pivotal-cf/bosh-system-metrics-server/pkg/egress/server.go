@@ -3,11 +3,21 @@ package egress
 import (
 	"log"
 
+	"expvar"
+
 	"github.com/pivotal-cf/bosh-system-metrics-server/pkg/definitions"
 )
 
 type BoshMetricsServer struct {
 	messages chan *definitions.Event
+}
+
+var (
+	egressSent *expvar.Int
+)
+
+func init() {
+	egressSent = expvar.NewInt("egress.sent")
 }
 
 func NewServer(m chan *definitions.Event) *BoshMetricsServer {
@@ -27,6 +37,7 @@ func (s *BoshMetricsServer) BoshMetrics(r *definitions.EgressRequest, srv defini
 			log.Printf("Send Error: %s", err)
 			return err
 		}
+		egressSent.Add(1)
 	}
 
 	return nil
