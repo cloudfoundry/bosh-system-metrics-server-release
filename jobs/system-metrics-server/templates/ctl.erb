@@ -4,6 +4,7 @@ RUN_DIR=/var/vcap/sys/run/system-metrics-server
 LOG_DIR=/var/vcap/sys/log/system-metrics-server
 PIDFILE=${RUN_DIR}/system-metrics-server.pid
 JOB_DIR=/var/vcap/jobs/system-metrics-server
+CONFIG_DIR=${JOB_DIR}/config
 
 PACKAGE_DIR=/var/vcap/packages/system-metrics-server
 
@@ -21,6 +22,8 @@ ulimit -n 8192
 echo $$ > $PIDFILE
 exec chpst -u vcap:vcap ./system-metrics-server \
   --egress-port=<%= p('system_metrics_server.port') %> \
+  --metrics-cert=${CONFIG_DIR}/certs/server.crt \
+  --metrics-key=${CONFIG_DIR}/certs/server.key \
   &>> ${LOG_DIR}/system-metrics-server.log
 
 ;;
