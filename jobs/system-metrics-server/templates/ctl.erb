@@ -24,6 +24,7 @@ exec chpst -u vcap:vcap ./system-metrics-server \
   --egress-port=<%= p('system_metrics_server.port') %> \
   --metrics-cert=${CONFIG_DIR}/certs/server.crt \
   --metrics-key=${CONFIG_DIR}/certs/server.key \
+  --health-port=<%= p('system_metrics_server.health_port') %> \
   &>> ${LOG_DIR}/system-metrics-server.log
 
 ;;

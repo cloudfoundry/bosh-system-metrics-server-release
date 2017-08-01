@@ -30,6 +30,10 @@ properties:
   system_metrics_server.tls.key:
     description: "The TLS private key for the system metrics server"
 
+  system_metrics_server.health_port:
+    description: "The port used to obtain health metrics on localhost"
+    default: 19110
+
   system_metrics_plugin.addr:
     description: "The address and port of the system metrics server to send metrics to"
     default: "localhost:25594"

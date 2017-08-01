@@ -12,6 +12,9 @@ import (
 
 	"crypto/tls"
 
+	"expvar"
+	"net/http"
+
 	"github.com/pivotal-cf/bosh-system-metrics-server/pkg/definitions"
 	"github.com/pivotal-cf/bosh-system-metrics-server/pkg/egress"
 	"github.com/pivotal-cf/bosh-system-metrics-server/pkg/ingress"
@@ -25,6 +28,8 @@ func main() {
 	ingressPort := flag.Int("ingress-port", 25594, "The port listening for bosh system events")
 	certPath := flag.String("metrics-cert", "", "The public cert for the metrics server")
 	keyPath := flag.String("metrics-key", "", "The private key for the metrics server")
+
+	healthPort := flag.Int("health-port", 19110, "The port for the localhost health endpoint")
 	flag.Parse()
 
 	tlsConfig, err := newTLSConfig(*certPath, *keyPath)
@@ -52,6 +57,12 @@ func main() {
 		stopReadingMessages()
 		stopWritingMessages()
 		egressLis.Close()
+	}()
+
+	go func() {
+		mux := http.NewServeMux()
+		mux.Handle("/health", expvar.Handler())
+		http.ListenAndServe(fmt.Sprintf("localhost:%d", *healthPort), mux)
 	}()
 
 	log.Printf("bosh system metrics grpc server listening on %s\n", egressLis.Addr().String())
