@@ -6,6 +6,7 @@ import (
 	"expvar"
 
 	"github.com/pivotal-cf/bosh-system-metrics-server/pkg/definitions"
+	"google.golang.org/grpc/metadata"
 )
 
 type BoshMetricsServer struct {
@@ -33,6 +34,12 @@ func (s *BoshMetricsServer) Start() func() {
 }
 
 func (s *BoshMetricsServer) BoshMetrics(r *definitions.EgressRequest, srv definitions.Egress_BoshMetricsServer) error {
+	md, _ := metadata.FromContext(srv.Context())
+	token, ok := md["authorization"]
+	if ok {
+		log.Printf("Got token from client: %+v", token)
+	}
+
 	for event := range s.messages {
 		err := srv.Send(event)
 		if err != nil {

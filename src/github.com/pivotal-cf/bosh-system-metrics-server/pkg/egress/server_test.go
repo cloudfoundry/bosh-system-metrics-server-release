@@ -9,6 +9,7 @@ import (
 	. "github.com/onsi/gomega"
 	"github.com/pivotal-cf/bosh-system-metrics-server/pkg/definitions"
 	"github.com/pivotal-cf/bosh-system-metrics-server/pkg/egress"
+	"golang.org/x/net/context"
 )
 
 func TestBoshMetricsWritesEventSuccessfully(t *testing.T) {
@@ -59,6 +60,10 @@ func newSpyEgressSender() *spyEgressSender {
 	return &spyEgressSender{
 		Received: make(chan *definitions.Event, 100),
 	}
+}
+
+func (s *spyEgressSender) Context() context.Context {
+	return context.Background()
 }
 
 func (s *spyEgressSender) Send(e *definitions.Event) error {
