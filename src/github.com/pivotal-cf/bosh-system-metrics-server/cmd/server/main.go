@@ -26,9 +26,10 @@ func main() {
 	rand.Seed(time.Now().UnixNano())
 	egressPort := flag.Int("egress-port", 25595, "The port which the grpc metrics server will listen on")
 	ingressPort := flag.Int("ingress-port", 25594, "The port listening for bosh system events")
-	healthPort := flag.Int("health-port", 9110, "The port for the localhost health endpoint")
 	certPath := flag.String("metrics-cert", "", "The public cert for the metrics server")
 	keyPath := flag.String("metrics-key", "", "The private key for the metrics server")
+
+	healthPort := flag.Int("health-port", 19110, "The port for the localhost health endpoint")
 	flag.Parse()
 
 	tlsConfig, err := newTLSConfig(*certPath, *keyPath)
