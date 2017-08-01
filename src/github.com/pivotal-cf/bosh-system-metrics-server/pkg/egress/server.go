@@ -13,11 +13,13 @@ type BoshMetricsServer struct {
 }
 
 var (
-	egressSent *expvar.Int
+	egressSentCounter    *expvar.Int
+	egressSendErrCounter *expvar.Int
 )
 
 func init() {
-	egressSent = expvar.NewInt("egress.sent")
+	egressSentCounter = expvar.NewInt("egress.sent")
+	egressSendErrCounter = expvar.NewInt("egress.send_err")
 }
 
 func NewServer(m chan *definitions.Event) *BoshMetricsServer {
@@ -35,9 +37,10 @@ func (s *BoshMetricsServer) BoshMetrics(r *definitions.EgressRequest, srv defini
 		err := srv.Send(event)
 		if err != nil {
 			log.Printf("Send Error: %s", err)
+			egressSendErrCounter.Add(1)
 			return err
 		}
-		egressSent.Add(1)
+		egressSentCounter.Add(1)
 	}
 
 	return nil

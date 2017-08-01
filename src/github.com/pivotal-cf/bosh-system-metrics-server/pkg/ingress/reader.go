@@ -20,11 +20,15 @@ type Ingestor struct {
 }
 
 var (
-	ingressReceived *expvar.Int
+	ingressReceivedCounter      *expvar.Int
+	ingressUnmarshallErrCounter *expvar.Int
+	ingressReadErrCounter       *expvar.Int
 )
 
 func init() {
-	ingressReceived = expvar.NewInt("ingress.received")
+	ingressReceivedCounter = expvar.NewInt("ingress.received")
+	ingressUnmarshallErrCounter = expvar.NewInt("ingress.unmarshall_err")
+	ingressReadErrCounter = expvar.NewInt("ingress.read_err")
 }
 
 func New(p int, u unmarshaller, m chan *definitions.Event) *Ingestor {
@@ -66,12 +70,14 @@ func (i *Ingestor) handleConnection(conn net.Conn, stop chan struct{}) {
 		b, err := reader.ReadBytes('\n')
 		if err != nil {
 			log.Printf("Error reading: %s", err)
+			ingressReadErrCounter.Add(1)
 			return
 		}
 
 		evt, err := i.unmarshaller(b)
 		if err != nil {
 			log.Printf("Error unmarshalling: %s", err)
+			ingressUnmarshallErrCounter.Add(1)
 			continue
 		}
 
@@ -79,7 +85,7 @@ func (i *Ingestor) handleConnection(conn net.Conn, stop chan struct{}) {
 			return
 		} else {
 			i.output <- evt
-			ingressReceived.Add(1)
+			ingressReceivedCounter.Add(1)
 		}
 	}
 }
