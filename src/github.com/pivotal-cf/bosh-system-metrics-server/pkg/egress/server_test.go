@@ -6,8 +6,6 @@ import (
 
 	"google.golang.org/grpc"
 
-	"fmt"
-
 	. "github.com/onsi/gomega"
 	"github.com/pivotal-cf/bosh-system-metrics-server/pkg/definitions"
 	"github.com/pivotal-cf/bosh-system-metrics-server/pkg/egress"
@@ -31,7 +29,7 @@ func TestBoshMetricsWritesEventSuccessfully(t *testing.T) {
 	messages <- event
 
 	Eventually(sender.Received).Should(Receive(Equal(event)))
-	Eventually(tokenChecker.received).Should(Receive(Equal("bearer test-token")))
+	Eventually(tokenChecker.received).Should(Receive(Equal("test-token")))
 }
 
 func TestBoshMetricsReturnsErrorWhenUnableToSend(t *testing.T) {
@@ -125,7 +123,7 @@ func (s *spyEgressSender) Context() context.Context {
 
 func validContext(token string) context.Context {
 	md := metadata.New(map[string]string{
-		"authorization": fmt.Sprintf("bearer %s", token),
+		"authorization": token,
 	})
 
 	return metadata.NewIncomingContext(context.Background(), md)
