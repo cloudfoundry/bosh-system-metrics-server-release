@@ -20,44 +20,13 @@ message Heartbeat {
   string instance_id = 4;
   string job_state = 5;
 
-  message Vitals {
-    message Cpu {
-      float sys = 1;
-      float user = 2;
-      float wait = 3;
-    }
-    Cpu cpu = 1;
-
-    message Disk {
-      message DiskUsage {
-        float inode_percent = 1;
-        float percent = 2;
-      }
-
-      DiskUsage ephemeral = 1;
-      DiskUsage persistent = 2;
-      DiskUsage system = 3;
-    }
-    Disk disk = 2;
-
-    repeated float load = 3;
-
-    message MemUsage {
-      int64 kb = 1;
-      float percent = 2;
-    }
-    MemUsage mem = 4;
-    MemUsage swap = 5;
-  }
-  Vitals vitals = 6;
-
   message Metric {
     string name = 1;
     double value = 2;
     int64 timestamp = 3;
     map<string, string> tags = 4;
   }
-  repeated Metric metrics = 7;
+  repeated Metric metrics = 6;
 }
 
 message Alert {
