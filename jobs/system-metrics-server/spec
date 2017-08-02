@@ -3,8 +3,9 @@ name: system-metrics-server
 
 templates:
   ctl.erb: bin/ctl
-  server.crt.erb: config/certs/server.crt
-  server.key.erb: config/certs/server.key
+  uaa-ca.crt.erb: config/certs/uaa/ca.crt
+  server.crt.erb: config/certs/system-metrics/server.crt
+  server.key.erb: config/certs/system-metrics/server.key
   run_plugin.sh.erb: bin/bosh-monitor/run.sh
 
 packages:
@@ -19,20 +20,25 @@ properties:
   system_metrics_server.port:
     description: "The port which the grpc metrics server will listen on"
     default: 25595
-
   system_metrics_server.trusted_uaa_authority:
     description: "The client authority required to connect"
     default: "bosh.system_metrics.read"
-
   system_metrics_server.tls.cert:
     description: "The TLS certificate for the system metrics server"
-
   system_metrics_server.tls.key:
     description: "The TLS private key for the system metrics server"
-
   system_metrics_server.health_port:
     description: "The port used to obtain health metrics on localhost"
     default: 19110
+
+  uaa.client_id:
+    description: "The UAA client identity which has access to check token"
+  uaa.client_secret:
+    description: "The UAA client secret which has access to check token"
+  uaa.url:
+    description: "The UAA url"
+  uaa.ca:
+    description: "The UAA CA certificate"
 
   system_metrics_plugin.addr:
     description: "The address and port of the system metrics server to send metrics to"

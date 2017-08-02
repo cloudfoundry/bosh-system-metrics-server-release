@@ -5,6 +5,7 @@ LOG_DIR=/var/vcap/sys/log/system-metrics-server
 PIDFILE=${RUN_DIR}/system-metrics-server.pid
 JOB_DIR=/var/vcap/jobs/system-metrics-server
 CONFIG_DIR=${JOB_DIR}/config
+CERT_DIR=${JOB_DIR}/config/certs
 
 PACKAGE_DIR=/var/vcap/packages/system-metrics-server
 
@@ -21,10 +22,14 @@ ulimit -n 8192
 
 echo $$ > $PIDFILE
 exec chpst -u vcap:vcap ./system-metrics-server \
-  --egress-port=<%= p('system_metrics_server.port') %> \
-  --metrics-cert=${CONFIG_DIR}/certs/server.crt \
-  --metrics-key=${CONFIG_DIR}/certs/server.key \
-  --health-port=<%= p('system_metrics_server.health_port') %> \
+  --egress-port="<%= p('system_metrics_server.port') %>" \
+  --metrics-cert="${CERT_DIR}/system-metrics/server.crt" \
+  --metrics-key="${CERT_DIR}/system-metrics/server.key" \
+  --health-port="<%= p('system_metrics_server.health_port') %>" \
+  --uaa-client-identity="<%= p('uaa.client_id') %>" \
+  --uaa-client-password="<%= p('uaa.client_secret') %>" \
+  --uaa-ca="${CERT_DIR}/uaa/ca.crt" \
+  --uaa-url="<%= p('uaa.url') %>" \
   &>> ${LOG_DIR}/system-metrics-server.log
 
 ;;

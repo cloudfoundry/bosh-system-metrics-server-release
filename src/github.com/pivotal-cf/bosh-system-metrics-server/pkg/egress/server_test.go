@@ -6,18 +6,24 @@ import (
 
 	"google.golang.org/grpc"
 
+	"fmt"
+
 	. "github.com/onsi/gomega"
 	"github.com/pivotal-cf/bosh-system-metrics-server/pkg/definitions"
 	"github.com/pivotal-cf/bosh-system-metrics-server/pkg/egress"
 	"golang.org/x/net/context"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/metadata"
+	"google.golang.org/grpc/status"
 )
 
 func TestBoshMetricsWritesEventSuccessfully(t *testing.T) {
 	RegisterTestingT(t)
 
 	messages := make(chan *definitions.Event, 100)
-	sender := newSpyEgressSender()
-	server := egress.NewServer(messages)
+	sender := newSpyEgressSender(validContext("test-token"))
+	tokenChecker := newSpyTokenChecker(nil)
+	server := egress.NewServer(messages, tokenChecker)
 	req := &definitions.EgressRequest{SubscriptionId: "subscriptionA"}
 
 	go server.BoshMetrics(req, sender)
@@ -25,15 +31,16 @@ func TestBoshMetricsWritesEventSuccessfully(t *testing.T) {
 	messages <- event
 
 	Eventually(sender.Received).Should(Receive(Equal(event)))
+	Eventually(tokenChecker.received).Should(Receive(Equal("bearer test-token")))
 }
 
 func TestBoshMetricsReturnsErrorWhenUnableToSend(t *testing.T) {
 	RegisterTestingT(t)
 
 	messages := make(chan *definitions.Event, 100)
-	sender := newSpyEgressSender()
+	sender := newSpyEgressSender(validContext("test-token"))
 	sender.SendError = errors.New("unable to send")
-	server := egress.NewServer(messages)
+	server := egress.NewServer(messages, newSpyTokenChecker(nil))
 	req := &definitions.EgressRequest{SubscriptionId: "subscriptionA"}
 
 	var returnErr error
@@ -49,21 +56,79 @@ func TestBoshMetricsReturnsErrorWhenUnableToSend(t *testing.T) {
 	Expect(returnErr).ToNot(BeNil())
 }
 
+func TestBoshMetricsWithoutIncomingContext(t *testing.T) {
+	RegisterTestingT(t)
+
+	messages := make(chan *definitions.Event, 100)
+	invalidContext := context.Background()
+	sender := newSpyEgressSender(invalidContext)
+	sender.SendError = errors.New("unable to send")
+	server := egress.NewServer(messages, newSpyTokenChecker(nil))
+	req := &definitions.EgressRequest{SubscriptionId: "subscriptionA"}
+
+	err := server.BoshMetrics(req, sender)
+
+	Expect(err).To(HaveOccurred())
+}
+
+func TestBoshMetricsWhenTokenIsInvalid(t *testing.T) {
+	RegisterTestingT(t)
+
+	messages := make(chan *definitions.Event, 100)
+	sender := newSpyEgressSender(validContext("test-token"))
+	tokenChecker := newSpyTokenChecker(errors.New("token-invalid"))
+	server := egress.NewServer(messages, tokenChecker)
+	req := &definitions.EgressRequest{}
+
+	err := server.BoshMetrics(req, sender)
+
+	Expect(err).To(HaveOccurred())
+
+	status, _ := status.FromError(err)
+	Expect(status.Code()).To(Equal(codes.PermissionDenied))
+}
+
+func TestBoshMetricsWithoutAuthorizationHeader(t *testing.T) {
+	RegisterTestingT(t)
+
+	messages := make(chan *definitions.Event, 100)
+	contextWithNoHeader := metadata.NewIncomingContext(context.Background(), metadata.New(nil))
+	sender := newSpyEgressSender(contextWithNoHeader)
+	sender.SendError = errors.New("unable to send")
+	server := egress.NewServer(messages, newSpyTokenChecker(nil))
+	req := &definitions.EgressRequest{}
+
+	err := server.BoshMetrics(req, sender)
+
+	Expect(err).To(HaveOccurred())
+}
+
 // ------ SPIES ------
 type spyEgressSender struct {
 	Received  chan *definitions.Event
 	SendError error
 	grpc.ServerStream
+	Token   string
+	context context.Context
 }
 
-func newSpyEgressSender() *spyEgressSender {
+func newSpyEgressSender(ctx context.Context) *spyEgressSender {
 	return &spyEgressSender{
 		Received: make(chan *definitions.Event, 100),
+		context:  ctx,
 	}
 }
 
 func (s *spyEgressSender) Context() context.Context {
-	return context.Background()
+	return s.context
+}
+
+func validContext(token string) context.Context {
+	md := metadata.New(map[string]string{
+		"authorization": fmt.Sprintf("bearer %s", token),
+	})
+
+	return metadata.NewIncomingContext(context.Background(), md)
 }
 
 func (s *spyEgressSender) Send(e *definitions.Event) error {
@@ -73,6 +138,23 @@ func (s *spyEgressSender) Send(e *definitions.Event) error {
 
 	s.Received <- e
 	return nil
+}
+
+type spyTokenChecker struct {
+	err      error
+	received chan string
+}
+
+func newSpyTokenChecker(e error) *spyTokenChecker {
+	return &spyTokenChecker{
+		err:      e,
+		received: make(chan string, 1),
+	}
+}
+
+func (t *spyTokenChecker) CheckToken(token string) error {
+	t.received <- token
+	return t.err
 }
 
 var event = &definitions.Event{

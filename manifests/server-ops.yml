@@ -17,6 +17,11 @@
           ca: "((system_metrics_server_ssl.ca))"
           cert: "((system_metrics_server_ssl.certificate))"
           key: "((system_metrics_server_ssl.private_key))"
+      uaa:
+        url: "https://((internal_ip)):8443"
+        ca: "((uaa_ssl.ca))"
+        client_id: "system_metrics_server"
+        client_secret: ((system_metrics_uaa_server_secret))
 
 - type: replace
   path: /instance_groups/name=bosh/jobs/-
@@ -24,6 +29,7 @@
     name: health_monitor
     release: bosh
 
+# This is the client representing the forwarder
 - type: replace
   path: /instance_groups/name=bosh/jobs/name=uaa/properties/uaa/clients/system_metrics_client?
   value:
@@ -37,6 +43,23 @@
   path: /variables/-
   value:
     name: system_metrics_uaa_client_secret
+    type: password
+
+# This is the client representing the server so it can call /check_token on
+# uaa
+- type: replace
+  path: /instance_groups/name=bosh/jobs/name=uaa/properties/uaa/clients/system_metrics_server?
+  value:
+   override: true
+   authorized-grant-types: client_credentials
+   scope: ""
+   authorities: uaa.resource
+   secret: ((system_metrics_uaa_server_secret))
+
+- type: replace
+  path: /variables/-
+  value:
+    name: system_metrics_uaa_server_secret
     type: password
 
 - type: replace

@@ -20,6 +20,9 @@ import (
 	"github.com/pivotal-cf/bosh-system-metrics-server/pkg/ingress"
 	"github.com/pivotal-cf/bosh-system-metrics-server/pkg/unmarshal"
 	"google.golang.org/grpc/credentials"
+	"io/ioutil"
+	"crypto/x509"
+	"github.com/pivotal-cf/bosh-system-metrics-server/pkg/tokenchecker"
 )
 
 func main() {
@@ -28,6 +31,11 @@ func main() {
 	ingressPort := flag.Int("ingress-port", 25594, "The port listening for bosh system events")
 	certPath := flag.String("metrics-cert", "", "The public cert for the metrics server")
 	keyPath := flag.String("metrics-key", "", "The private key for the metrics server")
+
+	uaaURL := flag.String("uaa-url", "", "The UAA URL")
+	uaaCA := flag.String("uaa-ca", "", "The path to the UAA CA cert")
+	uaaClient := flag.String("uaa-client-identity", "", "The UAA client identity which has access to check token")
+	uaaPassword := flag.String("uaa-client-password", "", "The UAA client secret which has access to check token")
 
 	healthPort := flag.Int("health-port", 19110, "The port for the localhost health endpoint")
 	flag.Parse()
@@ -42,10 +50,23 @@ func main() {
 		log.Fatalf("failed to listen on port %d: %v", *egressPort, err)
 	}
 
+	uaaTLSConfig := &tls.Config{}
+	err = setCACert(uaaTLSConfig, *uaaCA)
+	if err != nil {
+		log.Fatal(err)
+	}
+	tokenChecker := tokenchecker.New(&tokenchecker.TokenCheckerConfig{
+		UaaURL: *uaaURL,
+		TLSConfig: uaaTLSConfig,
+		UaaClient: *uaaClient,
+		UaaPassword: *uaaPassword,
+		Authority: "bosh.system_metrics.read",
+	})
+
 	messages := make(chan *definitions.Event)
 
 	i := ingress.New(*ingressPort, unmarshal.Event, messages)
-	e := egress.NewServer(messages)
+	e := egress.NewServer(messages, tokenChecker)
 
 	grpcServer := grpc.NewServer(grpc.Creds(credentials.NewTLS(tlsConfig)))
 	definitions.RegisterEgressServer(grpcServer, e)
@@ -86,4 +107,20 @@ func newTLSConfig(certFile, keyFile string) (*tls.Config, error) {
 	tlsConfig.Certificates = []tls.Certificate{tlsCert}
 
 	return tlsConfig, err
+}
+
+func setCACert(tlsConfig *tls.Config, caPath string) error {
+	caCertBytes, err := ioutil.ReadFile(caPath)
+	if err != nil {
+		return err
+	}
+
+	caCertPool := x509.NewCertPool()
+	if ok := caCertPool.AppendCertsFromPEM(caCertBytes); !ok {
+		return fmt.Errorf("cannot parse ca cert from %s", caPath)
+	}
+
+	tlsConfig.RootCAs = caCertPool
+
+	return nil
 }
