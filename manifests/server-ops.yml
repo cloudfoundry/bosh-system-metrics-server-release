@@ -1,3 +1,9 @@
+# This is the release which contains the system metrics server
+# that serves bosh system metrics over grpc.
+# It also contains a plugin which is compatible with the bosh
+# hm json plugin (https://github.com/cloudfoundry/bosh/blob/master/src/bosh-monitor/lib/bosh/monitor/plugins/json.rb)
+# This plugin reads bosh hm events over stdin and forwards to
+# the server via tcp
 - type: replace
   path: /releases/-
   value:
@@ -5,7 +11,9 @@
     version: latest
     url: file:///tmp/server-release.tgz
 
-# This job needs to run before health-monitor.
+# The system-metrics-server job needs to run before the
+# health_monitor job so the health monitor can register
+# the plugin via file path (see json plugin details above).
 - type: replace
   path: /instance_groups/name=bosh/jobs/name=health_monitor
   value:
@@ -22,14 +30,19 @@
         ca: "((uaa_ssl.ca))"
         client_id: "system_metrics_server"
         client_secret: ((system_metrics_uaa_server_secret))
-
 - type: replace
   path: /instance_groups/name=bosh/jobs/-
   value:
     name: health_monitor
     release: bosh
 
-# This is the client representing the forwarder
+# This is the client representing the forwarder. It has the
+# `bosh.system_metrics.read` authority which the server requires
+# to authenticate the client before sending it bosh metrics.
+# This is a property that needs to exist on the Credentials tab
+# of Ops Man so the operator can copy and paste into ERT config.
+# That is, username: system_metrics_client
+#          password: ((system_metrics_uaa_client_secret))
 - type: replace
   path: /instance_groups/name=bosh/jobs/name=uaa/properties/uaa/clients/system_metrics_client?
   value:
@@ -38,15 +51,17 @@
    scope: ""
    authorities: bosh.system_metrics.read
    secret: ((system_metrics_uaa_client_secret))
-
 - type: replace
   path: /variables/-
   value:
     name: system_metrics_uaa_client_secret
     type: password
 
-# This is the client representing the server so it can call /check_token on
-# uaa
+# This is the client representing the `system-metrics-server`
+# so it can call /check_token on uaa. It doesn't necessarily
+# need to be a new client, but it has to have the `uaa.resource`
+# authority. It is not required to be visible to the operator
+# in Ops Man UI.
 - type: replace
   path: /instance_groups/name=bosh/jobs/name=uaa/properties/uaa/clients/system_metrics_server?
   value:
@@ -55,13 +70,16 @@
    scope: ""
    authorities: uaa.resource
    secret: ((system_metrics_uaa_server_secret))
-
 - type: replace
   path: /variables/-
   value:
     name: system_metrics_uaa_server_secret
     type: password
 
+# This is the cert-key pair for the `system-metrics-server`
+# in order to encrypt bosh system metrics to its clients.
+# We would like to use the default_ca so the operator does
+# not need to copy and paste another property into ERT config.
 - type: replace
   path: /variables/-
   value:
