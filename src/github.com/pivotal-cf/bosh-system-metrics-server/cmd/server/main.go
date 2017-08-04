@@ -63,7 +63,7 @@ func main() {
 		Authority: "bosh.system_metrics.read",
 	})
 
-	messages := make(chan *definitions.Event)
+	messages := make(chan *definitions.Event, 10000)
 
 	i := ingress.New(*ingressPort, unmarshal.Event, messages)
 	e := egress.NewServer(messages, tokenChecker)
@@ -76,6 +76,7 @@ func main() {
 
 	defer func() {
 		stopReadingMessages()
+		close(messages)
 		stopWritingMessages()
 		egressLis.Close()
 	}()

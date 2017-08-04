@@ -6,6 +6,11 @@ import (
 
 	"google.golang.org/grpc"
 
+	"time"
+
+	"io/ioutil"
+	"log"
+
 	. "github.com/onsi/gomega"
 	"github.com/pivotal-cf/bosh-system-metrics-server/pkg/definitions"
 	"github.com/pivotal-cf/bosh-system-metrics-server/pkg/egress"
@@ -18,26 +23,30 @@ import (
 func TestBoshMetricsWritesEventSuccessfully(t *testing.T) {
 	RegisterTestingT(t)
 
-	messages := make(chan *definitions.Event, 100)
-	sender := newSpyEgressSender(validContext("test-token"))
+	messages := make(chan *definitions.Event, 1000)
+	sender := newSpyEgressSender(validContext("test-token"), 50)
 	tokenChecker := newSpyTokenChecker(nil)
 	server := egress.NewServer(messages, tokenChecker)
 	req := &definitions.EgressRequest{SubscriptionId: "subscriptionA"}
 
 	go server.BoshMetrics(req, sender)
+	time.Sleep(time.Millisecond * 100)
 
 	messages <- event
 
-	Eventually(sender.Received).Should(Receive(Equal(event)))
+	server.Start()
+
+	Eventually(sender.received).Should(Receive(Equal(event)))
 	Eventually(tokenChecker.received).Should(Receive(Equal("test-token")))
 }
 
 func TestBoshMetricsReturnsErrorWhenUnableToSend(t *testing.T) {
 	RegisterTestingT(t)
+	log.SetOutput(ioutil.Discard)
 
-	messages := make(chan *definitions.Event, 100)
-	sender := newSpyEgressSender(validContext("test-token"))
-	sender.SendError = errors.New("unable to send")
+	messages := make(chan *definitions.Event, 1000)
+	sender := newSpyEgressSender(validContext("test-token"), 50)
+	sender.sendError = errors.New("unable to send")
 	server := egress.NewServer(messages, newSpyTokenChecker(nil))
 	req := &definitions.EgressRequest{SubscriptionId: "subscriptionA"}
 
@@ -47,20 +56,25 @@ func TestBoshMetricsReturnsErrorWhenUnableToSend(t *testing.T) {
 		returnErr = server.BoshMetrics(req, sender)
 		close(done)
 	}()
+	time.Sleep(time.Millisecond * 100)
+
 	messages <- event
+
+	server.Start()
+
 	<-done
 
-	Expect(sender.Received).To(BeEmpty())
+	Expect(sender.received).To(BeEmpty())
 	Expect(returnErr).ToNot(BeNil())
 }
 
 func TestBoshMetricsWithoutIncomingContext(t *testing.T) {
 	RegisterTestingT(t)
 
-	messages := make(chan *definitions.Event, 100)
+	messages := make(chan *definitions.Event, 1000)
 	invalidContext := context.Background()
-	sender := newSpyEgressSender(invalidContext)
-	sender.SendError = errors.New("unable to send")
+	sender := newSpyEgressSender(invalidContext, 50)
+	sender.sendError = errors.New("unable to send")
 	server := egress.NewServer(messages, newSpyTokenChecker(nil))
 	req := &definitions.EgressRequest{SubscriptionId: "subscriptionA"}
 
@@ -72,8 +86,8 @@ func TestBoshMetricsWithoutIncomingContext(t *testing.T) {
 func TestBoshMetricsWhenTokenIsInvalid(t *testing.T) {
 	RegisterTestingT(t)
 
-	messages := make(chan *definitions.Event, 100)
-	sender := newSpyEgressSender(validContext("test-token"))
+	messages := make(chan *definitions.Event, 1000)
+	sender := newSpyEgressSender(validContext("test-token"), 50)
 	tokenChecker := newSpyTokenChecker(errors.New("token-invalid"))
 	server := egress.NewServer(messages, tokenChecker)
 	req := &definitions.EgressRequest{}
@@ -82,17 +96,17 @@ func TestBoshMetricsWhenTokenIsInvalid(t *testing.T) {
 
 	Expect(err).To(HaveOccurred())
 
-	status, _ := status.FromError(err)
-	Expect(status.Code()).To(Equal(codes.PermissionDenied))
+	st, _ := status.FromError(err)
+	Expect(st.Code()).To(Equal(codes.PermissionDenied))
 }
 
 func TestBoshMetricsWithoutAuthorizationHeader(t *testing.T) {
 	RegisterTestingT(t)
 
-	messages := make(chan *definitions.Event, 100)
+	messages := make(chan *definitions.Event, 1000)
 	contextWithNoHeader := metadata.NewIncomingContext(context.Background(), metadata.New(nil))
-	sender := newSpyEgressSender(contextWithNoHeader)
-	sender.SendError = errors.New("unable to send")
+	sender := newSpyEgressSender(contextWithNoHeader, 50)
+	sender.sendError = errors.New("unable to send")
 	server := egress.NewServer(messages, newSpyTokenChecker(nil))
 	req := &definitions.EgressRequest{}
 
@@ -101,40 +115,153 @@ func TestBoshMetricsWithoutAuthorizationHeader(t *testing.T) {
 	Expect(err).To(HaveOccurred())
 }
 
-// ------ SPIES ------
-type spyEgressSender struct {
-	Received  chan *definitions.Event
-	SendError error
-	grpc.ServerStream
-	Token   string
-	context context.Context
+func TestBoshMetricsDividesEventsBetweenMultipleClientsWithSameSubscriptionIds(t *testing.T) {
+	RegisterTestingT(t)
+
+	messages := make(chan *definitions.Event, 1000)
+	sender1 := newSpyEgressSender(validContext("test-token-a"), 50)
+	sender2 := newSpyEgressSender(validContext("test-token-b"), 50)
+	server := egress.NewServer(messages, newSpyTokenChecker(nil))
+	req := &definitions.EgressRequest{SubscriptionId: "subscriptionA"}
+
+	go server.BoshMetrics(req, sender1)
+	go server.BoshMetrics(req, sender2)
+	time.Sleep(time.Millisecond * 100)
+
+	server.Start()
+
+	for i := 0; i < 100; i++ {
+		messages <- event
+	}
+
+	Eventually(func() int { return len(sender1.received) + len(sender2.received) }).Should(Equal(100))
+	Expect(len(sender1.received)).To(BeNumerically(">", 0))
+	Expect(len(sender2.received)).To(BeNumerically(">", 0))
 }
 
-func newSpyEgressSender(ctx context.Context) *spyEgressSender {
-	return &spyEgressSender{
-		Received: make(chan *definitions.Event, 100),
-		context:  ctx,
+func TestBoshMetricsDuplicatesEventsBetweenMultipleClientsWithDifferentSubscriptionIds(t *testing.T) {
+	RegisterTestingT(t)
+
+	messages := make(chan *definitions.Event, 1000)
+	sender1 := newSpyEgressSender(validContext("test-token-a"), 50)
+	sender2 := newSpyEgressSender(validContext("test-token-b"), 50)
+	server := egress.NewServer(messages, newSpyTokenChecker(nil))
+	req1 := &definitions.EgressRequest{SubscriptionId: "subscriptionA"}
+	req2 := &definitions.EgressRequest{SubscriptionId: "subscriptionB"}
+
+	go server.BoshMetrics(req1, sender1)
+	go server.BoshMetrics(req2, sender2)
+	time.Sleep(time.Millisecond * 100)
+
+	for i := 0; i < 50; i++ {
+		messages <- event
 	}
+
+	server.Start()
+
+	Eventually(func() int { return len(sender1.received) }, "2s").Should(Equal(50))
+	Eventually(func() int { return len(sender2.received) }, "2s").Should(Equal(50))
+}
+
+func TestDrainAndDie(t *testing.T) {
+	RegisterTestingT(t)
+
+	messages := make(chan *definitions.Event, 1000)
+	sender1 := newSpyEgressSender(validContext("test-token-a"), 50)
+	server := egress.NewServer(messages, newSpyTokenChecker(nil))
+	req1 := &definitions.EgressRequest{SubscriptionId: "subscriptionA"}
+
+	go server.BoshMetrics(req1, sender1)
+	time.Sleep(time.Millisecond * 100)
+
+	for i := 0; i < 1000; i++ {
+		messages <- event
+	}
+
+	stop := server.Start()
+	close(messages)
+	stop()
+
+	Expect(len(messages)).To(Equal(0))
+}
+
+func TestSlowClientsDoesNotAffectFastClients(t *testing.T) {
+	RegisterTestingT(t)
+
+	messages := make(chan *definitions.Event, 20)
+	sender1 := newSpyEgressSender(validContext("test-token-a"), 100, withSendRate(time.Millisecond))
+	sender2 := newSpyEgressSender(validContext("test-token-b"), 100, withSendRate(time.Second))
+	// SubscriptionBufferSize is less than number of messages to get message distribution in Start() blocked.
+	server := egress.NewServer(messages, newSpyTokenChecker(nil), egress.WithSubscriptionBufferSize(10))
+	req1 := &definitions.EgressRequest{SubscriptionId: "subscriptionA"}
+	req2 := &definitions.EgressRequest{SubscriptionId: "subscriptionB"}
+
+	go server.BoshMetrics(req1, sender1)
+	go server.BoshMetrics(req2, sender2)
+	// This sleep is so we can ensure that the senders
+	// are registered before we start sending messages
+	time.Sleep(time.Millisecond * 100)
+
+	server.Start()
+
+	go func() {
+		// We send messages at a slower rate than the fastest sender to avoid
+		// dropping its messages so we can get an accurate sender.received count
+		for i := 0; i < 20; i++ {
+			messages <- event
+			time.Sleep(3 * time.Millisecond)
+		}
+	}()
+
+	Eventually(func() int { return len(sender1.received) }, "2s").Should(Equal(20))
+	Expect(len(sender2.received)).To(BeNumerically("<", 20))
+}
+
+// ------ SPIES ------
+type spyEgressSender struct {
+	received       chan *definitions.Event
+	sendError      error
+	token          string
+	context        context.Context
+	ingestRate     time.Duration
+	sendBufferSize int
+
+	grpc.ServerStream
+}
+
+type EgressSenderOpt func(*spyEgressSender)
+
+func withSendRate(d time.Duration) EgressSenderOpt {
+	return func(s *spyEgressSender) {
+		s.ingestRate = d
+	}
+}
+
+func newSpyEgressSender(ctx context.Context, bufferSize int, opts ...EgressSenderOpt) *spyEgressSender {
+	s := &spyEgressSender{
+		received:   make(chan *definitions.Event, bufferSize),
+		context:    ctx,
+		ingestRate: time.Millisecond,
+	}
+
+	for _, o := range opts {
+		o(s)
+	}
+
+	return s
 }
 
 func (s *spyEgressSender) Context() context.Context {
 	return s.context
 }
 
-func validContext(token string) context.Context {
-	md := metadata.New(map[string]string{
-		"authorization": token,
-	})
-
-	return metadata.NewIncomingContext(context.Background(), md)
-}
-
 func (s *spyEgressSender) Send(e *definitions.Event) error {
-	if s.SendError != nil {
-		return s.SendError
+	if s.sendError != nil {
+		return s.sendError
 	}
+	time.Sleep(s.ingestRate)
 
-	s.Received <- e
+	s.received <- e
 	return nil
 }
 
@@ -146,13 +273,21 @@ type spyTokenChecker struct {
 func newSpyTokenChecker(e error) *spyTokenChecker {
 	return &spyTokenChecker{
 		err:      e,
-		received: make(chan string, 1),
+		received: make(chan string, 100),
 	}
 }
 
 func (t *spyTokenChecker) CheckToken(token string) error {
 	t.received <- token
 	return t.err
+}
+
+func validContext(token string) context.Context {
+	md := metadata.New(map[string]string{
+		"authorization": token,
+	})
+
+	return metadata.NewIncomingContext(context.Background(), md)
 }
 
 var event = &definitions.Event{
