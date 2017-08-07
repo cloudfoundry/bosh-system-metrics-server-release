@@ -18,6 +18,7 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
+	"sync"
 )
 
 func TestBoshMetricsWritesEventSuccessfully(t *testing.T) {
@@ -46,7 +47,7 @@ func TestBoshMetricsReturnsErrorWhenUnableToSend(t *testing.T) {
 
 	messages := make(chan *definitions.Event, 1000)
 	sender := newSpyEgressSender(validContext("test-token"), 50)
-	sender.sendError = errors.New("unable to send")
+	sender.SendError(errors.New("unable to send"))
 	server := egress.NewServer(messages, newSpyTokenChecker(nil))
 	req := &definitions.EgressRequest{SubscriptionId: "subscriptionA"}
 
@@ -74,7 +75,7 @@ func TestBoshMetricsWithoutIncomingContext(t *testing.T) {
 	messages := make(chan *definitions.Event, 1000)
 	invalidContext := context.Background()
 	sender := newSpyEgressSender(invalidContext, 50)
-	sender.sendError = errors.New("unable to send")
+	sender.SendError(errors.New("unable to send"))
 	server := egress.NewServer(messages, newSpyTokenChecker(nil))
 	req := &definitions.EgressRequest{SubscriptionId: "subscriptionA"}
 
@@ -106,7 +107,7 @@ func TestBoshMetricsWithoutAuthorizationHeader(t *testing.T) {
 	messages := make(chan *definitions.Event, 1000)
 	contextWithNoHeader := metadata.NewIncomingContext(context.Background(), metadata.New(nil))
 	sender := newSpyEgressSender(contextWithNoHeader, 50)
-	sender.sendError = errors.New("unable to send")
+	sender.SendError(errors.New("unable to send"))
 	server := egress.NewServer(messages, newSpyTokenChecker(nil))
 	req := &definitions.EgressRequest{}
 
@@ -153,14 +154,43 @@ func TestBoshMetricsDuplicatesEventsBetweenMultipleClientsWithDifferentSubscript
 	go server.BoshMetrics(req2, sender2)
 	time.Sleep(time.Millisecond * 100)
 
+	server.Start()
+
 	for i := 0; i < 50; i++ {
 		messages <- event
 	}
 
-	server.Start()
-
 	Eventually(func() int { return len(sender1.received) }, "2s").Should(Equal(50))
 	Eventually(func() int { return len(sender2.received) }, "2s").Should(Equal(50))
+}
+
+func TestBoshMetricsRedirectsAllEventsToRemainingConnectedClients(t *testing.T) {
+	RegisterTestingT(t)
+
+	messages := make(chan *definitions.Event, 1000)
+	sender1 := newSpyEgressSender(validContext("test-token-a"), 50)
+	sender2 := newSpyEgressSender(validContext("test-token-a"), 50)
+	server := egress.NewServer(messages, newSpyTokenChecker(nil))
+	req1 := &definitions.EgressRequest{SubscriptionId: "subscriptionA"}
+	req2 := &definitions.EgressRequest{SubscriptionId: "subscriptionA"}
+
+	go server.BoshMetrics(req1, sender1)
+	go server.BoshMetrics(req2, sender2)
+	// giving the senders a chance to register their subscriptions
+	time.Sleep(time.Millisecond * 100)
+
+	server.Start()
+	for i := 0; i < 50; i++ {
+		messages <- event
+
+		if i == 15 {
+			// Kill one of the senders midway.
+			sender1.SendError(errors.New("unable to send"))
+		}
+	}
+
+	Eventually(func() int { return len(sender1.received) + len(sender2.received) }, "2s").Should(Equal(50))
+	Expect(len(sender2.received)).To(BeNumerically(">", len(sender1.received)))
 }
 
 func TestDrainAndDie(t *testing.T) {
@@ -220,11 +250,13 @@ func TestSlowClientsDoesNotAffectFastClients(t *testing.T) {
 // ------ SPIES ------
 type spyEgressSender struct {
 	received       chan *definitions.Event
-	sendError      error
 	token          string
 	context        context.Context
 	ingestRate     time.Duration
 	sendBufferSize int
+
+	mu        sync.Mutex
+	sendError error
 
 	grpc.ServerStream
 }
@@ -256,6 +288,9 @@ func (s *spyEgressSender) Context() context.Context {
 }
 
 func (s *spyEgressSender) Send(e *definitions.Event) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
 	if s.sendError != nil {
 		return s.sendError
 	}
@@ -263,6 +298,13 @@ func (s *spyEgressSender) Send(e *definitions.Event) error {
 
 	s.received <- e
 	return nil
+}
+
+func (s *spyEgressSender) SendError(e error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	s.sendError = e
 }
 
 type spyTokenChecker struct {

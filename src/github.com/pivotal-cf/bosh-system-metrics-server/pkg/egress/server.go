@@ -107,12 +107,21 @@ func (s *BoshMetricsServer) BoshMetrics(r *definitions.EgressRequest, srv defini
 		if err != nil {
 			log.Printf("Send Error: %s", err)
 			egressSendErrCounter.Add(1)
+			retryMessageOnSubscription(m, event, r.SubscriptionId)
 			return err
 		}
 		egressSentCounter.Add(1)
 	}
 
 	return nil
+}
+
+func retryMessageOnSubscription(messages chan *definitions.Event, event *definitions.Event, subscription string) {
+	select {
+	case messages <- event:
+	default:
+		egressSubscriptionDropped.Add(subscription, 1)
+	}
 }
 
 func (s *BoshMetricsServer) register(subscriptionId string) chan *definitions.Event {
