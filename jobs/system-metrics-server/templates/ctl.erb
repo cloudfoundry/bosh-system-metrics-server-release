@@ -22,7 +22,8 @@ ulimit -n 8192
 
 echo $$ > $PIDFILE
 exec chpst -u vcap:vcap ./system-metrics-server \
-  --egress-port="<%= p('system_metrics_server.port') %>" \
+  --ingress-port="<%= p('system_metrics_server.ingress_port') %>" \
+  --egress-port="<%= p('system_metrics_server.egress_port') %>" \
   --metrics-cert="${CERT_DIR}/system-metrics/server.crt" \
   --metrics-key="${CERT_DIR}/system-metrics/server.key" \
   --health-port="<%= p('system_metrics_server.health_port') %>" \

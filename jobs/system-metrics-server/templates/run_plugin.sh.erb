@@ -2,4 +2,4 @@
 
 PACKAGE_PATH=/var/vcap/packages/system-metrics-plugin
 LOG_DIR=/var/vcap/sys/log/system-metrics-server
-exec $PACKAGE_PATH/system-metrics-plugin --addr="<%= p('system_metrics_plugin.addr') %>" &>> ${LOG_DIR}/system-metrics-plugin.log
+exec $PACKAGE_PATH/system-metrics-plugin --server-port="<%= p('system_metrics_server.ingress_port') %>" &>> ${LOG_DIR}/system-metrics-plugin.log
