@@ -26,6 +26,8 @@ type BoshMetricsServer struct {
 	messages     chan *definitions.Event
 	tokenChecker tokenChecker
 
+	wg sync.WaitGroup
+
 	mu                     sync.RWMutex
 	registry               map[string]chan *definitions.Event
 	subscriptionBufferSize int
@@ -92,6 +94,12 @@ func (s *BoshMetricsServer) Start() func() {
 
 	return func() {
 		<-done
+
+		for _, ch := range s.registry {
+			close(ch)
+		}
+
+		s.wg.Wait()
 	}
 }
 
@@ -100,6 +108,9 @@ func (s *BoshMetricsServer) BoshMetrics(r *definitions.EgressRequest, srv defini
 	if err != nil {
 		return err
 	}
+
+	s.wg.Add(1)
+	defer s.wg.Done()
 
 	m := s.register(r.SubscriptionId)
 	for event := range m {

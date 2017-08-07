@@ -193,15 +193,21 @@ func TestBoshMetricsRedirectsAllEventsToRemainingConnectedClients(t *testing.T) 
 	Expect(len(sender2.received)).To(BeNumerically(">", len(sender1.received)))
 }
 
-func TestDrainAndDie(t *testing.T) {
+func TestDrainAndDieProcessesAllInTransitMessages(t *testing.T) {
 	RegisterTestingT(t)
 
 	messages := make(chan *definitions.Event, 1000)
-	sender1 := newSpyEgressSender(validContext("test-token-a"), 50)
-	server := egress.NewServer(messages, newSpyTokenChecker(nil))
+
+	sender1 := newSpyEgressSender(validContext("test-token-a"), 1000)
 	req1 := &definitions.EgressRequest{SubscriptionId: "subscriptionA"}
 
+	sender2 := newSpyEgressSender(validContext("test-token-a"), 1000)
+	req2 := &definitions.EgressRequest{SubscriptionId: "subscriptionB"}
+
+	server := egress.NewServer(messages, newSpyTokenChecker(nil))
+
 	go server.BoshMetrics(req1, sender1)
+	go server.BoshMetrics(req2, sender2)
 	time.Sleep(time.Millisecond * 100)
 
 	for i := 0; i < 1000; i++ {
@@ -209,10 +215,17 @@ func TestDrainAndDie(t *testing.T) {
 	}
 
 	stop := server.Start()
+
+	Expect(len(messages)).ToNot(Equal(0))
+	Expect(len(sender1.received)).ToNot(Equal(1000))
+	Expect(len(sender2.received)).ToNot(Equal(1000))
+
 	close(messages)
 	stop()
 
 	Expect(len(messages)).To(Equal(0))
+	Expect(len(sender1.received)).To(Equal(1000))
+	Expect(len(sender2.received)).To(Equal(1000))
 }
 
 func TestSlowClientsDoesNotAffectFastClients(t *testing.T) {
