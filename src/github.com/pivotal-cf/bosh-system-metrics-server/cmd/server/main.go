@@ -75,13 +75,20 @@ func main() {
 	stopWritingMessages := e.Start()
 
 	defer func() {
+		fmt.Println("process shutting down, stop accepting messages from bosh health monitor...")
 		stopReadingMessages()
 		close(messages)
+
+		fmt.Println("drain remaining messages...")
 		stopWritingMessages()
 		egressLis.Close()
+
+		fmt.Println("DONE")
 	}()
 
 	go func() {
+		fmt.Printf("starting health endpoint on http://localhost:%d/health", *healthPort)
+
 		mux := http.NewServeMux()
 		mux.Handle("/health", expvar.Handler())
 		http.ListenAndServe(fmt.Sprintf("localhost:%d", *healthPort), mux)
