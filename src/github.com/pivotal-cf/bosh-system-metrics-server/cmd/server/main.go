@@ -87,7 +87,7 @@ func main() {
 	}()
 
 	go func() {
-		fmt.Printf("starting health endpoint on http://localhost:%d/health", *healthPort)
+		fmt.Printf("starting health endpoint on http://localhost:%d/health\n", *healthPort)
 
 		mux := http.NewServeMux()
 		mux.Handle("/health", expvar.Handler())

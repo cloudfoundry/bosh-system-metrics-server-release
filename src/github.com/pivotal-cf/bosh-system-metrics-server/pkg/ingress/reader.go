@@ -45,7 +45,7 @@ func (i *Ingestor) Start() func() {
 	if err != nil {
 		log.Fatalf("failed to listen on port %d: %v", i.port, err)
 	}
-	log.Printf("ingestor listening on %s", ingressLis.Addr().String())
+	log.Printf("ingestor listening on %s\n", ingressLis.Addr().String())
 
 	go func() {
 		for {
@@ -69,14 +69,14 @@ func (i *Ingestor) handleConnection(conn net.Conn, stop chan struct{}) {
 	for {
 		b, err := reader.ReadBytes('\n')
 		if err != nil {
-			log.Printf("Error reading: %s", err)
+			log.Printf("Error reading: %s\n", err)
 			ingressReadErrCounter.Add(1)
 			return
 		}
 
 		evt, err := i.unmarshaller(b)
 		if err != nil {
-			log.Printf("Error unmarshalling: %s", err)
+			log.Printf("Error unmarshalling: %s\n", err)
 			ingressUnmarshallErrCounter.Add(1)
 			continue
 		}

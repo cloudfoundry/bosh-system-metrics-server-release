@@ -17,7 +17,7 @@ func main() {
 	serverPort := flag.Int("server-port", 25594, "The destination port to send events on localhost")
 	flag.Parse()
 
-	log.Printf("Starting system metrics plugin...")
+	log.Printf("Starting system metrics plugin...\n")
 	in := bufio.NewReader(os.Stdin)
 
 	for {
@@ -30,10 +30,10 @@ func main() {
 func forwardMetricsToServer(in *bufio.Reader, port int) {
 	conn, err := net.Dial("tcp", fmt.Sprintf("localhost:%d", port))
 	if err != nil {
-		log.Printf("unable to connect to system metrics server: %s", err)
+		log.Printf("unable to connect to system metrics server: %s\n", err)
 		return
 	}
-	log.Printf("connected to system metrics server at %s", conn.LocalAddr().String())
+	log.Printf("connected to system metrics server at %s\n", conn.LocalAddr().String())
 
 	for {
 		b, err := in.ReadBytes('\n')
@@ -45,7 +45,7 @@ func forwardMetricsToServer(in *bufio.Reader, port int) {
 		conn.SetWriteDeadline(time.Now().Add(writeDeadline))
 		_, err = conn.Write(b)
 		if err != nil {
-			log.Printf("unable to write to system metrics server: %s", err)
+			log.Printf("unable to write to system metrics server: %s\n", err)
 			time.Sleep(time.Second)
 			return
 		}

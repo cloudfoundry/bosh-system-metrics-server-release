@@ -116,7 +116,7 @@ func (s *BoshMetricsServer) BoshMetrics(r *definitions.EgressRequest, srv defini
 	for event := range m {
 		err := srv.Send(event)
 		if err != nil {
-			log.Printf("Send Error: %s", err)
+			log.Printf("Send Error: %s\n", err)
 			egressSendErrCounter.Add(1)
 			retryMessageOnSubscription(m, event, r.SubscriptionId)
 			return err
