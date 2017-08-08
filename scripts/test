@@ -1,5 +1,7 @@
 #!/bin/bash
 
+set -ex
+
 pushd src/github.com/pivotal-cf/bosh-system-metrics-server
-go test ./... -race
+go test ./... -race -count 10
 popd
