@@ -95,6 +95,8 @@ func (s *BoshMetricsServer) Start() func() {
 	return func() {
 		<-done
 
+		s.mu.RLock()
+		defer s.mu.RUnlock()
 		for _, ch := range s.registry {
 			close(ch)
 		}
@@ -127,6 +129,7 @@ func (s *BoshMetricsServer) BoshMetrics(r *definitions.EgressRequest, srv defini
 	return nil
 }
 
+// TODO: not this
 func retryMessageOnSubscription(messages chan *definitions.Event, event *definitions.Event, subscription string) {
 	select {
 	case messages <- event:

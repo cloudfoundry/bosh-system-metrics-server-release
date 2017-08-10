@@ -81,7 +81,7 @@ func main() {
 
 		fmt.Println("drain remaining messages...")
 		stopWritingMessages()
-		egressLis.Close()
+		grpcServer.GracefulStop()
 
 		fmt.Println("DONE")
 	}()
