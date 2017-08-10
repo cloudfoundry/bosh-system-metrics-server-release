@@ -26,7 +26,7 @@
           cert: "((system_metrics_server_ssl.certificate))"
           key: "((system_metrics_server_ssl.private_key))"
       uaa:
-        url: "https://((external_ip)):8443"
+        url: "https://((external_ip || internal_ip)):8443"
         ca: "((uaa_ssl.ca))"
         client_id: "system_metrics_server"
         client_secret: ((system_metrics_uaa_server_secret))
