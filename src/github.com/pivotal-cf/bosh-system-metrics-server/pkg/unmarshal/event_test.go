@@ -78,7 +78,7 @@ func TestHeartbeatConversion(t *testing.T) {
 
 	Expect(heartbeat).To(Equal(&definitions.Event{
 		Id:         "55b68400-f984-4f76-b341-cf849e07d4f9",
-		Timestamp:  1499293724,
+		Timestamp:  1499293724000000000,
 		Deployment: "loggregator",
 		Message: &definitions.Event_Heartbeat{
 			Heartbeat: &definitions.Heartbeat{
@@ -91,7 +91,7 @@ func TestHeartbeatConversion(t *testing.T) {
 					{
 						Name:      "system.load.1m",
 						Value:     2.5,
-						Timestamp: 1499293724,
+						Timestamp: 1499293724000000000,
 						Tags: map[string]string{
 							"job":   "consul",
 							"index": "1",
@@ -125,7 +125,7 @@ func TestAlertConversion(t *testing.T) {
 
 	Expect(alert).To(Equal(&definitions.Event{
 		Id:         "93eb25a4-9348-4232-6f71-69e1e01081d7",
-		Timestamp:  1499359162,
+		Timestamp:  1499359162000000000,
 		Deployment: "loggregator",
 		Message: &definitions.Event_Alert{
 			Alert: &definitions.Alert{

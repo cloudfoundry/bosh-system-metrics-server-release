@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"errors"
 
+	"time"
+
 	"github.com/pivotal-cf/bosh-system-metrics-server/pkg/definitions"
 )
 
@@ -29,7 +31,7 @@ func mapAlert(evt event) *definitions.Event {
 	return &definitions.Event{
 		Id:         evt.Id,
 		Deployment: evt.Deployment,
-		Timestamp:  evt.CreatedAt,
+		Timestamp:  time.Unix(evt.CreatedAt, 0).UnixNano(),
 		Message: &definitions.Event_Alert{
 			Alert: &definitions.Alert{
 				Severity: evt.Severity,
@@ -48,7 +50,7 @@ func mapHeartbeat(evt event) *definitions.Event {
 		metrics[i] = &definitions.Heartbeat_Metric{
 			Name:      m.Name,
 			Value:     m.Value,
-			Timestamp: m.Timestamp,
+			Timestamp: time.Unix(m.Timestamp, 0).UnixNano(),
 			Tags:      m.Tags,
 		}
 	}
@@ -61,7 +63,7 @@ func mapHeartbeat(evt event) *definitions.Event {
 	return &definitions.Event{
 		Id:         evt.Id,
 		Deployment: evt.Deployment,
-		Timestamp:  evt.Timestamp,
+		Timestamp:  time.Unix(evt.Timestamp, 0).UnixNano(),
 		Message: &definitions.Event_Heartbeat{
 			Heartbeat: &definitions.Heartbeat{
 				AgentId:    evt.AgentId,
