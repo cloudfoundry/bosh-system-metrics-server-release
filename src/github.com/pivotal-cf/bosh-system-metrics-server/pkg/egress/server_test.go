@@ -11,6 +11,8 @@ import (
 	"io/ioutil"
 	"log"
 
+	"sync"
+
 	. "github.com/onsi/gomega"
 	"github.com/pivotal-cf/bosh-system-metrics-server/pkg/definitions"
 	"github.com/pivotal-cf/bosh-system-metrics-server/pkg/egress"
@@ -18,7 +20,6 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
-	"sync"
 )
 
 func TestBoshMetricsWritesEventSuccessfully(t *testing.T) {
@@ -120,8 +121,8 @@ func TestBoshMetricsDividesEventsBetweenMultipleClientsWithSameSubscriptionIds(t
 	RegisterTestingT(t)
 
 	messages := make(chan *definitions.Event, 1000)
-	sender1 := newSpyEgressSender(validContext("test-token-a"), 50)
-	sender2 := newSpyEgressSender(validContext("test-token-b"), 50)
+	sender1 := newSpyEgressSender(validContext("test-token-a"), 100)
+	sender2 := newSpyEgressSender(validContext("test-token-b"), 100)
 	server := egress.NewServer(messages, newSpyTokenChecker(nil))
 	req := &definitions.EgressRequest{SubscriptionId: "subscriptionA"}
 
