@@ -32,7 +32,7 @@ properties:
     description: "The TLS private key for the system metrics server"
   system_metrics_server.health_port:
     description: "The port used to obtain health metrics on localhost"
-    default: 19110
+    default: 0
 
   uaa.client_id:
     description: "The UAA client identity which has access to check token"

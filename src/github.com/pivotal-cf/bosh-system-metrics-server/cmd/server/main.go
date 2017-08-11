@@ -15,14 +15,15 @@ import (
 	"expvar"
 	"net/http"
 
+	"crypto/x509"
+	"io/ioutil"
+
 	"github.com/pivotal-cf/bosh-system-metrics-server/pkg/definitions"
 	"github.com/pivotal-cf/bosh-system-metrics-server/pkg/egress"
 	"github.com/pivotal-cf/bosh-system-metrics-server/pkg/ingress"
+	"github.com/pivotal-cf/bosh-system-metrics-server/pkg/tokenchecker"
 	"github.com/pivotal-cf/bosh-system-metrics-server/pkg/unmarshal"
 	"google.golang.org/grpc/credentials"
-	"io/ioutil"
-	"crypto/x509"
-	"github.com/pivotal-cf/bosh-system-metrics-server/pkg/tokenchecker"
 )
 
 func main() {
@@ -37,7 +38,7 @@ func main() {
 	uaaClient := flag.String("uaa-client-identity", "", "The UAA client identity which has access to check token")
 	uaaPassword := flag.String("uaa-client-password", "", "The UAA client secret which has access to check token")
 
-	healthPort := flag.Int("health-port", 19110, "The port for the localhost health endpoint")
+	healthPort := flag.Int("health-port", 0, "The port for the localhost health endpoint")
 	flag.Parse()
 
 	tlsConfig, err := newTLSConfig(*certPath, *keyPath)
@@ -56,11 +57,11 @@ func main() {
 		log.Fatal(err)
 	}
 	tokenChecker := tokenchecker.New(&tokenchecker.TokenCheckerConfig{
-		UaaURL: *uaaURL,
-		TLSConfig: uaaTLSConfig,
-		UaaClient: *uaaClient,
+		UaaURL:      *uaaURL,
+		TLSConfig:   uaaTLSConfig,
+		UaaClient:   *uaaClient,
 		UaaPassword: *uaaPassword,
-		Authority: "bosh.system_metrics.read",
+		Authority:   "bosh.system_metrics.read",
 	})
 
 	messages := make(chan *definitions.Event, 10000)
@@ -87,11 +88,16 @@ func main() {
 	}()
 
 	go func() {
-		fmt.Printf("starting health endpoint on http://localhost:%d/health\n", *healthPort)
+		lis, err := net.Listen("tcp", fmt.Sprintf("localhost:%d", *healthPort))
+		if err != nil {
+			log.Printf("unable to start health endpoint: %s", err)
+		}
 
 		mux := http.NewServeMux()
 		mux.Handle("/health", expvar.Handler())
-		http.ListenAndServe(fmt.Sprintf("localhost:%d", *healthPort), mux)
+
+		fmt.Printf("starting health endpoint on http://%s/health\n", lis.Addr().String())
+		http.Serve(lis, mux)
 	}()
 
 	log.Printf("bosh system metrics grpc server listening on %s\n", egressLis.Addr().String())
