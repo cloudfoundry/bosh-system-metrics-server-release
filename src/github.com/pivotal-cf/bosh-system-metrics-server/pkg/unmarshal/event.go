@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"github.com/pivotal-cf/bosh-system-metrics-server/pkg/definitions"
-	"log"
 )
 
 func Event(eventJSON []byte) (*definitions.Event, error) {
@@ -20,9 +19,6 @@ func Event(eventJSON []byte) (*definitions.Event, error) {
 
 	switch evt.Kind {
 	case "heartbeat":
-		env := mapHeartbeat(evt)
-		log.Printf("JSON Event: %v\n", evt)
-		log.Printf("System Metrics Envelope: %v\n", env)
 		return mapHeartbeat(evt), nil
 	case "alert":
 		return mapAlert(evt), nil
