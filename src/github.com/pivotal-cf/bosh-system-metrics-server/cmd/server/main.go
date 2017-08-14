@@ -36,7 +36,7 @@ func main() {
 	uaaClient := flag.String("uaa-client-identity", "", "The UAA client identity which has access to check token")
 	uaaPassword := flag.String("uaa-client-password", "", "The UAA client secret which has access to check token")
 
-	healthPort := flag.Int("monitor-port", 0, "The port for the localhost monitor endpoint")
+	healthPort := flag.Int("monitor-port", 0, "The port for the localhost health endpoint")
 	pprofPort := flag.Int("pprof-port", 0, "The port for the localhost pprof endpoint")
 
 	flag.Parse()
