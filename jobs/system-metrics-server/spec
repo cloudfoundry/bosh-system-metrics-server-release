@@ -33,6 +33,9 @@ properties:
   system_metrics_server.health_port:
     description: "The port used to obtain health metrics on localhost"
     default: 0
+  system_metrics_server.pprof_port:
+    description: "The port for the pprof endpoint on localhost"
+    default: 6060
 
   uaa.client_id:
     description: "The UAA client identity which has access to check token"

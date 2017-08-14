@@ -11,6 +11,7 @@ files:
 - github.com/pivotal-cf/bosh-system-metrics-server/pkg/definitions/*.go # gosub
 - github.com/pivotal-cf/bosh-system-metrics-server/pkg/egress/*.go # gosub
 - github.com/pivotal-cf/bosh-system-metrics-server/pkg/ingress/*.go # gosub
+- github.com/pivotal-cf/bosh-system-metrics-server/pkg/monitor/*.go # gosub
 - github.com/pivotal-cf/bosh-system-metrics-server/pkg/tokenchecker/*.go # gosub
 - github.com/pivotal-cf/bosh-system-metrics-server/pkg/unmarshal/*.go # gosub
 - golang.org/x/net/context/*.go # gosub

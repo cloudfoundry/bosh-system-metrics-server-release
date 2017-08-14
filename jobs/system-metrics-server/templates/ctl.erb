@@ -26,11 +26,12 @@ exec chpst -u vcap:vcap ./system-metrics-server \
   --egress-port="<%= p('system_metrics_server.egress_port') %>" \
   --metrics-cert="${CERT_DIR}/system-metrics/server.crt" \
   --metrics-key="${CERT_DIR}/system-metrics/server.key" \
-  --health-port="<%= p('system_metrics_server.health_port') %>" \
   --uaa-client-identity="<%= p('uaa.client_id') %>" \
   --uaa-client-password="<%= p('uaa.client_secret') %>" \
   --uaa-ca="${CERT_DIR}/uaa/ca.crt" \
   --uaa-url="<%= p('uaa.url') %>" \
+  --health-port="<%= p('system_metrics_server.health_port') %>" \
+  --pprof-port="<%= p('system_metrics_server.pprof_port') %>" \
   &>> ${LOG_DIR}/system-metrics-server.log
 
 ;;
