@@ -209,6 +209,7 @@ func TestDrainAndDieProcessesAllInTransitMessages(t *testing.T) {
 
 	go server.BoshMetrics(req1, sender1)
 	go server.BoshMetrics(req2, sender2)
+	// giving the senders a chance to register their subscriptions
 	time.Sleep(time.Millisecond * 100)
 
 	for i := 0; i < 1000; i++ {
