@@ -27,12 +27,12 @@ func (s *profiler) Start() {
 	addr := fmt.Sprintf("localhost:%d", s.port)
 	lis, err := net.Listen("tcp", addr)
 	if err != nil {
-		log.Panicf("Error creating pprof listener: %s", err)
+		log.Panicf("error creating pprof listener: %s", err)
 	}
 
-	log.Printf("Starting pprof profiler on: %s", lis.Addr().String())
+	log.Printf("starting pprof profiler on: %s", lis.Addr().String())
 	err = http.Serve(lis, nil)
 	if err != nil {
-		log.Panicf("Error starting pprof profiler: %s", err)
+		log.Panicf("error starting pprof profiler: %s", err)
 	}
 }
