@@ -69,14 +69,14 @@ func (i *Ingestor) handleConnection(conn net.Conn, stop chan struct{}) {
 	for {
 		b, err := reader.ReadBytes('\n')
 		if err != nil {
-			log.Printf("Error reading: %s\n", err)
+			log.Printf("error reading: %s\n", err)
 			ingressReadErrCounter.Add(1)
 			return
 		}
 
 		evt, err := i.unmarshaller(b)
 		if err != nil {
-			log.Printf("Error unmarshalling: %s\n", err)
+			log.Printf("error unmarshalling: %s\n", err)
 			ingressUnmarshallErrCounter.Add(1)
 			continue
 		}

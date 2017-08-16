@@ -34,17 +34,19 @@ type BoshMetricsServer struct {
 }
 
 var (
-	egressSentCounter         *expvar.Int
+	egressSubscriptionSent    *expvar.Map
 	egressSendErrCounter      *expvar.Int
 	egressAuthErrCounter      *expvar.Int
 	egressSubscriptionDropped *expvar.Map
+	egressProcessedCounter    *expvar.Int
 )
 
 func init() {
-	egressSentCounter = expvar.NewInt("egress.sent")
+	egressSubscriptionSent = expvar.NewMap("egress.subscription_sent")
 	egressSendErrCounter = expvar.NewInt("egress.send_err")
 	egressAuthErrCounter = expvar.NewInt("egress.auth_err")
 	egressSubscriptionDropped = expvar.NewMap("egress.subscription_dropped")
+	egressProcessedCounter = expvar.NewInt("egress.processed")
 }
 
 type tokenChecker interface {
@@ -87,6 +89,7 @@ func (s *BoshMetricsServer) Start() func() {
 					egressSubscriptionDropped.Add(subscription, 1)
 				}
 			}
+			egressProcessedCounter.Add(1)
 			s.mu.RUnlock()
 		}
 		close(done)
@@ -123,7 +126,7 @@ func (s *BoshMetricsServer) BoshMetrics(r *definitions.EgressRequest, srv defini
 			retryMessageOnSubscription(m, event, r.SubscriptionId)
 			return err
 		}
-		egressSentCounter.Add(1)
+		egressSubscriptionSent.Add(r.SubscriptionId, 1)
 	}
 
 	return nil
