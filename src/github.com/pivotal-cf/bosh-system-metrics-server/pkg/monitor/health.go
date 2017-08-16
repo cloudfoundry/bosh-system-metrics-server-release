@@ -28,7 +28,7 @@ func (s *health) Start() {
 	mux := http.NewServeMux()
 	mux.Handle("/health", expvar.Handler())
 
-	fmt.Printf("starting health endpoint on http://%s/health\n", lis.Addr().String())
+	log.Printf("starting health endpoint on http://%s/health\n", lis.Addr().String())
 	err = http.Serve(lis, mux)
 	log.Printf("error starting the health server: %s", err)
 }
