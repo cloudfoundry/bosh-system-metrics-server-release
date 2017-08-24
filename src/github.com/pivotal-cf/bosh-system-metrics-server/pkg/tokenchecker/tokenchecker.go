@@ -2,11 +2,11 @@ package tokenchecker
 
 import (
 	"crypto/tls"
-	"net/http"
-	"time"
-	"net/url"
 	"fmt"
+	"net/http"
+	"net/url"
 	"strings"
+	"time"
 )
 
 type TokenChecker struct {
@@ -22,6 +22,8 @@ type TokenCheckerConfig struct {
 	Authority   string
 }
 
+// New returns a TokenChecker that has been
+// configured with the TokenCheckerConfig.
 func New(cfg *TokenCheckerConfig) *TokenChecker {
 	return &TokenChecker{
 		cfg: cfg,
@@ -34,6 +36,8 @@ func New(cfg *TokenCheckerConfig) *TokenChecker {
 	}
 }
 
+// CheckToken verifies that the token contains
+// the appropriate TokenCheckerConfig.Authority.
 func (t *TokenChecker) CheckToken(token string) error {
 	form := url.Values{}
 	form.Set("token", token)

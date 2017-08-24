@@ -9,6 +9,9 @@ import (
 	"github.com/pivotal-cf/bosh-system-metrics-server/pkg/definitions"
 )
 
+// Event unmarshalls the json bosh event into
+// either a Heartbeat or Alert `definitions.Event`.
+// It returns an error if the event is not one of the two mentioned.
 func Event(eventJSON []byte) (*definitions.Event, error) {
 	var evt event
 

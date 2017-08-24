@@ -31,6 +31,7 @@ func init() {
 	ingressReadErrCounter = expvar.NewInt("ingress.read_err")
 }
 
+// New returns a new Ingestor.
 func New(p int, u unmarshaller, m chan *definitions.Event) *Ingestor {
 	return &Ingestor{
 		port:         p,
@@ -39,6 +40,9 @@ func New(p int, u unmarshaller, m chan *definitions.Event) *Ingestor {
 	}
 }
 
+// Start spins up a go routine to listen for bosh events over tcp.
+// It returns a shutdown function that shuts down any open connections
+// and closes the listener.
 func (i *Ingestor) Start() func() {
 	stop := make(chan struct{})
 	ingressLis, err := net.Listen("tcp", fmt.Sprintf(":%d", i.port))

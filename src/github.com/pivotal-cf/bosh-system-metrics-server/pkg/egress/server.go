@@ -61,6 +61,8 @@ func WithSubscriptionBufferSize(n int) ServerOpt {
 	}
 }
 
+// NewServer returns a BoshMetricsServer.
+// It serves bosh metrics via a grpc connections from clients.
 func NewServer(m chan *definitions.Event, t tokenChecker, opts ...ServerOpt) *BoshMetricsServer {
 	s := &BoshMetricsServer{
 		messages:               m,
@@ -76,6 +78,9 @@ func NewServer(m chan *definitions.Event, t tokenChecker, opts ...ServerOpt) *Bo
 	return s
 }
 
+// Start spins up a new go routine that distributes metrics to each subscription.
+// It returns a shutdown function which blocks until all subscriptions are
+// drained.
 func (s *BoshMetricsServer) Start() func() {
 	done := make(chan struct{})
 
@@ -108,6 +113,9 @@ func (s *BoshMetricsServer) Start() func() {
 	}
 }
 
+// BoshMetrics is the grpc handler that serves EgressRequests.
+// It verifies auth tokens from the `authorization` metadata.
+// It returns an error if the auth token is missing or invalid.
 func (s *BoshMetricsServer) BoshMetrics(r *definitions.EgressRequest, srv definitions.Egress_BoshMetricsServer) error {
 	err := s.checkToken(srv)
 	if err != nil {
@@ -132,7 +140,9 @@ func (s *BoshMetricsServer) BoshMetrics(r *definitions.EgressRequest, srv defini
 	return nil
 }
 
-// TODO: not this
+// TODO: Change retry strategy. The subscription channel
+// should be read only at this point. We could get a send on close channel
+// if this happens after shutdown.
 func retryMessageOnSubscription(subscriptionMsgs chan *definitions.Event, event *definitions.Event, subscription string) {
 	select {
 	case subscriptionMsgs <- event:
