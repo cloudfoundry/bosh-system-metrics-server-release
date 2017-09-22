@@ -2,4 +2,4 @@ name: bosh-system-metrics-server
 blobstore:
   provider: s3
   options:
-    bucket_name: bosh-system-metrics-release-blobs
+    bucket_name: bosh-system-metrics-blobs
