@@ -2,7 +2,7 @@
 name: system-metrics-server
 
 dependencies:
-- golang1.8.3
+- golang
 
 files:
 - github.com/golang/protobuf/proto/*.go # gosub
