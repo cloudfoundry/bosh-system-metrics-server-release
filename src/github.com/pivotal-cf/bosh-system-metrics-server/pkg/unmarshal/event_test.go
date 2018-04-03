@@ -30,12 +30,12 @@ func TestHeartbeatConversion(t *testing.T) {
           },
           "disk":{
              "ephemeral":{
-                "inode_percent":"2",
+                "inode_percent":"",
                 "percent":"4"
              },
              "persistent":{
                 "inode_percent":"2",
-                "percent":"4"
+                "percent":""
              },
              "system":{
                 "inode_percent":"14",
@@ -43,6 +43,7 @@ func TestHeartbeatConversion(t *testing.T) {
              }
           },
           "load":[
+			 "",
              "0.18",
              "0.23",
              "0.29"
@@ -61,6 +62,16 @@ func TestHeartbeatConversion(t *testing.T) {
           {
              "name":"system.load.1m",
              "value":"2.5",
+             "timestamp":1499293724,
+             "tags":{
+                "job":"consul",
+                "index":"1",
+                "id":"6f60a3ce-9e4d-477f-ba45-7d29bcfab5b9"
+             }
+          },
+          {
+             "name":"system.load.5m",
+             "value":"",
              "timestamp":1499293724,
              "tags":{
                 "job":"consul",
@@ -99,6 +110,44 @@ func TestHeartbeatConversion(t *testing.T) {
 						},
 					},
 				},
+			},
+		},
+	}))
+}
+
+func TestHeartbeatConversion_WithEmptyFields(t *testing.T) {
+	RegisterTestingT(t)
+
+	var heartbeatJSON = []byte(`
+    {
+       "kind":"heartbeat",
+       "id":"",
+       "timestamp":1499293724,
+       "deployment":"",
+       "agent_id":"",
+       "job":"",
+       "index":"",
+       "instance_id":"",
+       "job_state":""
+    }
+    `)
+
+	heartbeat, err := unmarshal.Event(heartbeatJSON)
+
+	Expect(err).ToNot(HaveOccurred())
+
+	Expect(heartbeat).To(Equal(&definitions.Event{
+		Id:         "",
+		Timestamp:  1499293724000000000,
+		Deployment: "",
+		Message: &definitions.Event_Heartbeat{
+			Heartbeat: &definitions.Heartbeat{
+				AgentId:    "",
+				Job:        "",
+				Index:      0,
+				InstanceId: "",
+				JobState:   "",
+				Metrics: []*definitions.Heartbeat_Metric{},
 			},
 		},
 	}))

@@ -3,8 +3,9 @@ package unmarshal
 import (
 	"encoding/json"
 	"errors"
-
+	"fmt"
 	"time"
+	"strconv"
 
 	"github.com/pivotal-cf/bosh-system-metrics-server/pkg/definitions"
 )
@@ -17,7 +18,7 @@ func Event(eventJSON []byte) (*definitions.Event, error) {
 
 	err := json.Unmarshal(eventJSON, &evt)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("%s (%s)", err, string(eventJSON))
 	}
 
 	switch evt.Kind {
@@ -48,21 +49,6 @@ func mapAlert(evt event) *definitions.Event {
 }
 
 func mapHeartbeat(evt event) *definitions.Event {
-	metrics := make([]*definitions.Heartbeat_Metric, len(evt.Metrics))
-	for i, m := range evt.Metrics {
-		metrics[i] = &definitions.Heartbeat_Metric{
-			Name:      m.Name,
-			Value:     m.Value,
-			Timestamp: time.Unix(m.Timestamp, 0).UnixNano(),
-			Tags:      m.Tags,
-		}
-	}
-
-	loadValues := make([]float32, len(evt.Vitals.Load))
-	for i, l := range evt.Vitals.Load {
-		loadValues[i] = float32(l)
-	}
-
 	return &definitions.Event{
 		Id:         evt.Id,
 		Deployment: evt.Deployment,
@@ -71,11 +57,34 @@ func mapHeartbeat(evt event) *definitions.Event {
 			Heartbeat: &definitions.Heartbeat{
 				AgentId:    evt.AgentId,
 				Job:        evt.Job,
-				Index:      evt.Index,
+				Index:      getIndexFromString(evt),
 				InstanceId: evt.InstanceId,
 				JobState:   evt.JobState,
-				Metrics:    metrics,
+				Metrics:    filterMetricsWithValues(evt),
 			},
 		},
 	}
+}
+
+func getIndexFromString(evt event) int32 {
+	index, _ := strconv.Atoi(evt.Index)
+	return int32(index)
+}
+
+func filterMetricsWithValues(evt event) []*definitions.Heartbeat_Metric {
+	metrics := make([]*definitions.Heartbeat_Metric, 0)
+	for _, m := range evt.Metrics {
+		val, err := strconv.ParseFloat(m.Value, 64)
+		if err != nil {
+			continue
+		}
+
+		metrics = append(metrics, &definitions.Heartbeat_Metric{
+			Name:      m.Name,
+			Value:     val,
+			Timestamp: time.Unix(m.Timestamp, 0).UnixNano(),
+			Tags:      m.Tags,
+		})
+	}
+	return metrics
 }
