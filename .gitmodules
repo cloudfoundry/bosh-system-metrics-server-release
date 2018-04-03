@@ -1,6 +1,6 @@
 [submodule "src/google.golang.org/grpc"]
 	path = src/google.golang.org/grpc
-	url = https:///github.com/grpc/grpc-go
+	url = https://github.com/grpc/grpc-go
 [submodule "src/github.com/golang/protobuf"]
 	path = src/github.com/golang/protobuf
 	url = https://github.com/golang/protobuf
