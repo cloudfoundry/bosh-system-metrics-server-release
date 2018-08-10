@@ -22,6 +22,7 @@ import (
 	"github.com/pivotal-cf/bosh-system-metrics-server/pkg/tokenchecker"
 	"github.com/pivotal-cf/bosh-system-metrics-server/pkg/unmarshal"
 	"google.golang.org/grpc/credentials"
+	"google.golang.org/grpc/keepalive"
 )
 
 func main() {
@@ -69,7 +70,16 @@ func main() {
 	i := ingress.New(*ingressPort, unmarshal.Event, messages)
 	e := egress.NewServer(messages, tokenChecker)
 
-	grpcServer := grpc.NewServer(grpc.Creds(credentials.NewTLS(tlsConfig)))
+	grpcServer := grpc.NewServer(
+		grpc.Creds(credentials.NewTLS(tlsConfig)),
+		grpc.KeepaliveEnforcementPolicy(keepalive.EnforcementPolicy{
+			MinTime:             5 * time.Second,
+			PermitWithoutStream: true,
+		}),
+		grpc.KeepaliveParams(keepalive.ServerParameters{
+			Time: 1 * time.Minute,
+		}),
+	)
 	definitions.RegisterEgressServer(grpcServer, e)
 
 	stopReadingMessages := i.Start()
