@@ -19,3 +19,6 @@
 [submodule "src/gopkg.in/yaml.v2"]
 	path = src/gopkg.in/yaml.v2
 	url = https://gopkg.in/yaml.v2
+[submodule "src/golang.org/x/sys"]
+	path = src/golang.org/x/sys
+	url = https://go.googlesource.com/sys
