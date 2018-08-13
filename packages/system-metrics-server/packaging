@@ -1,5 +1,7 @@
 set -ex
 
+source /var/vcap/packages/golang-1.10-linux/bosh/compile.env
+
 export GOROOT=$(readlink -nf /var/vcap/packages/golang)
 export PATH=$GOROOT/bin:$PATH
 export GOPATH=$PWD

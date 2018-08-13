@@ -2,7 +2,7 @@
 name: system-metrics-plugin
 
 dependencies:
-- golang
+- golang-1.10-linux
 
 files:
 - github.com/pivotal-cf/bosh-system-metrics-server/cmd/plugin/*.go # gosub
