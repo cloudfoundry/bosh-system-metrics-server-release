@@ -1,6 +1,6 @@
 set -ex
 source /var/vcap/packages/golang-1.10-linux/bosh/compile.env
 
-mkdir src
-mv github.com src/
+ln -s . src
+
 go build -o ${BOSH_INSTALL_TARGET}/system-metrics-plugin github.com/pivotal-cf/bosh-system-metrics-server/cmd/plugin
