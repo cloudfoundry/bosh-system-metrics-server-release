@@ -2,18 +2,10 @@ set -ex
 
 source /var/vcap/packages/golang-1.10-linux/bosh/compile.env
 
-echo "before mv"
-ls -la
-echo "after mv"
-
 mkdir src
 
 shopt -s extglob
     mv !(src) src/
 shopt -u extglob
-echo "after mv"
-ls -la
-ls -la src/golang.org/x/sys/**/*
-echo "after mv"
 
 go build -o ${BOSH_INSTALL_TARGET}/system-metrics-server github.com/pivotal-cf/bosh-system-metrics-server/cmd/server
