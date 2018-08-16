@@ -5,4 +5,4 @@ dependencies:
 - golang-1.10-linux
 
 files:
-- github.com/pivotal-cf/bosh-system-metrics-server/cmd/plugin/*.go # gosub
+- github.com/pivotal-cf/bosh-system-metrics-server/cmd/plugin/* # gosub
