@@ -1,11 +1,11 @@
 set -ex
 
-source /var/vcap/packages/golang-1.10-linux/bosh/compile.env
+source /var/vcap/packages/golang-1.11-linux/bosh/compile.env
 
-mkdir src
+export GO111MODULE=on
 
-shopt -s extglob
-    mv !(src) src/
-shopt -u extglob
+mkdir -p cache
+export GOCACHE=cache
 
-go build -o ${BOSH_INSTALL_TARGET}/system-metrics-plugin github.com/pivotal-cf/bosh-system-metrics-server/cmd/plugin
+cd github.com/pivotal-cf/bosh-system-metrics-server/
+go build -mod=vendor -o ${BOSH_INSTALL_TARGET}/system-metrics-plugin cmd/plugin/main.go

@@ -45,7 +45,7 @@ func New(p int, u unmarshaller, m chan *definitions.Event) *Ingestor {
 // and closes the listener.
 func (i *Ingestor) Start() func() {
 	stop := make(chan struct{})
-	ingressLis, err := net.Listen("tcp", fmt.Sprintf(":%d", i.port))
+	ingressLis, err := net.Listen("tcp", fmt.Sprintf("localhost:%d", i.port))
 	if err != nil {
 		log.Fatalf("failed to listen on port %d: %v", i.port, err)
 	}

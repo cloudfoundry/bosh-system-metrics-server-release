@@ -2,57 +2,7 @@
 name: system-metrics-server
 
 dependencies:
-- golang-1.10-linux
+- golang-1.11-linux
 
 files:
-- github.com/golang/protobuf/proto/* # gosub
-- github.com/golang/protobuf/ptypes/* # gosub
-- github.com/golang/protobuf/ptypes/any/* # gosub
-- github.com/golang/protobuf/ptypes/duration/* # gosub
-- github.com/golang/protobuf/ptypes/timestamp/* # gosub
-- github.com/pivotal-cf/bosh-system-metrics-server/cmd/server/* # gosub
-- github.com/pivotal-cf/bosh-system-metrics-server/pkg/definitions/* # gosub
-- github.com/pivotal-cf/bosh-system-metrics-server/pkg/egress/* # gosub
-- github.com/pivotal-cf/bosh-system-metrics-server/pkg/ingress/* # gosub
-- github.com/pivotal-cf/bosh-system-metrics-server/pkg/monitor/* # gosub
-- github.com/pivotal-cf/bosh-system-metrics-server/pkg/tokenchecker/* # gosub
-- github.com/pivotal-cf/bosh-system-metrics-server/pkg/unmarshal/* # gosub
-- golang.org/x/net/context/* # gosub
-- golang.org/x/net/http2/* # gosub
-- golang.org/x/net/http2/hpack/* # gosub
-- golang.org/x/net/idna/* # gosub
-- golang.org/x/net/internal/timeseries/* # gosub
-- golang.org/x/net/lex/httplex/* # gosub
-- golang.org/x/net/trace/* # gosub
-- golang.org/x/sys/unix/* # gosub
-- golang.org/x/text/secure/bidirule/* # gosub
-- golang.org/x/text/transform/* # gosub
-- golang.org/x/text/unicode/bidi/* # gosub
-- golang.org/x/text/unicode/norm/* # gosub
-- google.golang.org/genproto/googleapis/rpc/status/* # gosub
-- google.golang.org/grpc/* # gosub
-- google.golang.org/grpc/balancer/* # gosub
-- google.golang.org/grpc/balancer/base/* # gosub
-- google.golang.org/grpc/balancer/roundrobin/* # gosub
-- google.golang.org/grpc/codes/* # gosub
-- google.golang.org/grpc/connectivity/* # gosub
-- google.golang.org/grpc/credentials/* # gosub
-- google.golang.org/grpc/encoding/* # gosub
-- google.golang.org/grpc/encoding/proto/* # gosub
-- google.golang.org/grpc/grpclog/* # gosub
-- google.golang.org/grpc/internal/* # gosub
-- google.golang.org/grpc/internal/backoff/* # gosub
-- google.golang.org/grpc/internal/channelz/* # gosub
-- google.golang.org/grpc/internal/envconfig/* # gosub
-- google.golang.org/grpc/internal/grpcrand/* # gosub
-- google.golang.org/grpc/internal/transport/* # gosub
-- google.golang.org/grpc/keepalive/* # gosub
-- google.golang.org/grpc/metadata/* # gosub
-- google.golang.org/grpc/naming/* # gosub
-- google.golang.org/grpc/peer/* # gosub
-- google.golang.org/grpc/resolver/* # gosub
-- google.golang.org/grpc/resolver/dns/* # gosub
-- google.golang.org/grpc/resolver/passthrough/* # gosub
-- google.golang.org/grpc/stats/* # gosub
-- google.golang.org/grpc/status/* # gosub
-- google.golang.org/grpc/tap/* # gosub
+- github.com/pivotal-cf/bosh-system-metrics-server/**/*
