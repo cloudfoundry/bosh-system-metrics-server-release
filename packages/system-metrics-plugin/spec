@@ -5,4 +5,4 @@ dependencies:
 - golang-1.11-linux
 
 files:
-- github.com/pivotal-cf/bosh-system-metrics-server/**/*
+- github.com/cloudfoundry/bosh-system-metrics-server/**/*

@@ -10,8 +10,8 @@ import (
 	"testing"
 
 	. "github.com/onsi/gomega"
-	"github.com/pivotal-cf/bosh-system-metrics-server/pkg/definitions"
-	"github.com/pivotal-cf/bosh-system-metrics-server/pkg/ingress"
+	"github.com/cloudfoundry/bosh-system-metrics-server/pkg/definitions"
+	"github.com/cloudfoundry/bosh-system-metrics-server/pkg/ingress"
 )
 
 func TestStartProcessesMessages(t *testing.T) {

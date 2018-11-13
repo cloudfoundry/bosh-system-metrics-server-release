@@ -8,7 +8,7 @@ import (
 
 	"expvar"
 
-	"github.com/pivotal-cf/bosh-system-metrics-server/pkg/definitions"
+	"github.com/cloudfoundry/bosh-system-metrics-server/pkg/definitions"
 )
 
 type unmarshaller func(eventJSON []byte) (*definitions.Event, error)

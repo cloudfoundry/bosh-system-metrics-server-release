@@ -9,7 +9,7 @@ import (
 
 	"sync"
 
-	"github.com/pivotal-cf/bosh-system-metrics-server/pkg/definitions"
+	"github.com/cloudfoundry/bosh-system-metrics-server/pkg/definitions"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"

@@ -18,7 +18,7 @@ The server listens on tcp localhost for events from the **Plugin**. The server a
 
 The server distributes the events on a subscription basis. That is, if two clients connect with the same `subscription-id`, the event stream will be distributed evenly between them. If two clients connect with _different_ `subscription-id`s, they will each get a copy of the event stream.
 
-[forwarder]: https://github.com/pivotal-cf/bosh-system-metrics-forwarder-release
-[server]: https://github.com/pivotal-cf/bosh-system-metrics-server-release
+[forwarder]: https://github.com/cloudfoundry/bosh-system-metrics-forwarder-release
+[server]: https://github.com/cloudfoundry/bosh-system-metrics-server-release
 [json plugin]: https://github.com/cloudfoundry/bosh/blob/262.x/src/bosh-monitor/lib/bosh/monitor/plugins/json.rb
 [diagram]: https://docs.google.com/a/pivotal.io/drawings/d/1l1iAQaBc6SHIpWb3x-lI9p4JVIZN_3ErepbAohqnaPw/pub?w=1192&h=719

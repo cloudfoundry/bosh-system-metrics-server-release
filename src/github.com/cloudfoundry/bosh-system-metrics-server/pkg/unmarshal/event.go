@@ -7,7 +7,7 @@ import (
 	"time"
 	"strconv"
 
-	"github.com/pivotal-cf/bosh-system-metrics-server/pkg/definitions"
+	"github.com/cloudfoundry/bosh-system-metrics-server/pkg/definitions"
 )
 
 // Event unmarshalls the json bosh event into

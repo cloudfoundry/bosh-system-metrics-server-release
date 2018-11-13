@@ -9,7 +9,7 @@ import (
 	"sync"
 
 	. "github.com/onsi/gomega"
-	"github.com/pivotal-cf/bosh-system-metrics-server/pkg/tokenchecker"
+	"github.com/cloudfoundry/bosh-system-metrics-server/pkg/tokenchecker"
 	"encoding/base64"
 	"fmt"
 )

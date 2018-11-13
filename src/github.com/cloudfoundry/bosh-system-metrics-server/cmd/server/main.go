@@ -15,12 +15,12 @@ import (
 	"crypto/x509"
 	"io/ioutil"
 
-	"github.com/pivotal-cf/bosh-system-metrics-server/pkg/definitions"
-	"github.com/pivotal-cf/bosh-system-metrics-server/pkg/egress"
-	"github.com/pivotal-cf/bosh-system-metrics-server/pkg/ingress"
-	"github.com/pivotal-cf/bosh-system-metrics-server/pkg/monitor"
-	"github.com/pivotal-cf/bosh-system-metrics-server/pkg/tokenchecker"
-	"github.com/pivotal-cf/bosh-system-metrics-server/pkg/unmarshal"
+	"github.com/cloudfoundry/bosh-system-metrics-server/pkg/definitions"
+	"github.com/cloudfoundry/bosh-system-metrics-server/pkg/egress"
+	"github.com/cloudfoundry/bosh-system-metrics-server/pkg/ingress"
+	"github.com/cloudfoundry/bosh-system-metrics-server/pkg/monitor"
+	"github.com/cloudfoundry/bosh-system-metrics-server/pkg/tokenchecker"
+	"github.com/cloudfoundry/bosh-system-metrics-server/pkg/unmarshal"
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/keepalive"
 )

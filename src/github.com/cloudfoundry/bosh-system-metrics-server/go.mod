@@ -1,4 +1,4 @@
-module github.com/pivotal-cf/bosh-system-metrics-server
+module github.com/cloudfoundry/bosh-system-metrics-server
 
 require (
 	github.com/golang/protobuf v1.2.0

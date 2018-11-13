@@ -4,8 +4,8 @@ import (
 	"testing"
 
 	. "github.com/onsi/gomega"
-	"github.com/pivotal-cf/bosh-system-metrics-server/pkg/definitions"
-	"github.com/pivotal-cf/bosh-system-metrics-server/pkg/unmarshal"
+	"github.com/cloudfoundry/bosh-system-metrics-server/pkg/definitions"
+	"github.com/cloudfoundry/bosh-system-metrics-server/pkg/unmarshal"
 )
 
 func TestHeartbeatConversion(t *testing.T) {
