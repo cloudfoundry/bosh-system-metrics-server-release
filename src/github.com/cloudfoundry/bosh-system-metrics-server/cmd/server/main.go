@@ -25,6 +25,11 @@ import (
 	"google.golang.org/grpc/keepalive"
 )
 
+var defaultServerCipherSuites = []uint16{
+	tls.TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,
+	tls.TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,
+}
+
 func main() {
 	rand.Seed(time.Now().UnixNano())
 	egressPort := flag.Int("egress-port", 25595, "The port which the grpc metrics server will listen on")
@@ -116,6 +121,7 @@ func newTLSConfig(certFile, keyFile string) (*tls.Config, error) {
 	tlsConfig := &tls.Config{
 		InsecureSkipVerify: false,
 		MinVersion:         tls.VersionTLS12,
+		CipherSuites:       defaultServerCipherSuites,      
 	}
 
 	tlsConfig.Certificates = []tls.Certificate{tlsCert}
