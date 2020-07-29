@@ -1,0 +1,19 @@
+<%
+  job_dir = "/var/vcap/jobs/system-metrics-server"
+  cert_dir = "#{job_dir}/config/certs"
+
+  config = {
+    "ingress-port" => p('system_metrics_server.ingress_port'),
+    "egress-port"  => p('system_metrics_server.egress_port'),
+    "metrics-cert" => "#{cert_dir}/system-metrics/server.crt",
+    "metrics-key" => "#{cert_dir}/system-metrics/server.key",
+    "uaa-client-identity" => "#{p('uaa.client_id')}",
+    "uaa-client-password" => "#{p('uaa.client_secret')}",
+    "uaa-ca" => "#{cert_dir}/uaa/ca.crt",
+    "uaa-url" => "#{p('uaa.url')}",
+    "health-port" => p('system_metrics_server.health_port'),
+    "pprof-port" => p('system_metrics_server.pprof_port'),
+  }
+%>
+
+<%= YAML.dump(config) %>

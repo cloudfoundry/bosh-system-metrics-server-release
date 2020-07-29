@@ -15,6 +15,7 @@ import (
 	"crypto/x509"
 	"io/ioutil"
 
+	"github.com/cloudfoundry/bosh-system-metrics-server/pkg/config"
 	"github.com/cloudfoundry/bosh-system-metrics-server/pkg/definitions"
 	"github.com/cloudfoundry/bosh-system-metrics-server/pkg/egress"
 	"github.com/cloudfoundry/bosh-system-metrics-server/pkg/ingress"
@@ -32,47 +33,43 @@ var defaultServerCipherSuites = []uint16{
 
 func main() {
 	rand.Seed(time.Now().UnixNano())
-	egressPort := flag.Int("egress-port", 25595, "The port which the grpc metrics server will listen on")
-	ingressPort := flag.Int("ingress-port", 25594, "The port listening for bosh system events")
-	certPath := flag.String("metrics-cert", "", "The public cert for the metrics server")
-	keyPath := flag.String("metrics-key", "", "The private key for the metrics server")
 
-	uaaURL := flag.String("uaa-url", "", "The UAA URL")
-	uaaCA := flag.String("uaa-ca", "", "The path to the UAA CA cert")
-	uaaClient := flag.String("uaa-client-identity", "", "The UAA client identity which has access to check token")
-	uaaPassword := flag.String("uaa-client-password", "", "The UAA client secret which has access to check token")
-
-	healthPort := flag.Int("health-port", 0, "The port for the localhost health endpoint")
-	pprofPort := flag.Int("pprof-port", 0, "The port for the localhost pprof endpoint")
+	configFilePath := flag.String("config", "", "A path to the configuration file")
 
 	flag.Parse()
 
-	tlsConfig, err := newTLSConfig(*certPath, *keyPath)
+	c, err := config.Read(*configFilePath)
+	if err != nil {
+		log.Fatalf("unable to parse config: %s", err)
+	}
+
+	tlsConfig, err := newTLSConfig(c.CertPath, c.KeyPath)
 	if err != nil {
 		log.Fatalf("unable to parse certs: %s", err)
 	}
 
-	egressLis, err := net.Listen("tcp", fmt.Sprintf(":%d", *egressPort))
+	egressLis, err := net.Listen("tcp", fmt.Sprintf(":%d", c.EgressPort))
 	if err != nil {
-		log.Fatalf("failed to listen on port %d: %v", *egressPort, err)
+		log.Fatalf("failed to listen on port %d: %v", c.EgressPort, err)
 	}
 
 	uaaTLSConfig := &tls.Config{}
-	err = setCACert(uaaTLSConfig, *uaaCA)
+	err = setCACert(uaaTLSConfig, c.UaaCA)
 	if err != nil {
 		log.Fatal(err)
 	}
+
 	tokenChecker := tokenchecker.New(&tokenchecker.TokenCheckerConfig{
-		UaaURL:      *uaaURL,
+		UaaURL:      c.UaaURL,
 		TLSConfig:   uaaTLSConfig,
-		UaaClient:   *uaaClient,
-		UaaPassword: *uaaPassword,
+		UaaClient:   c.UaaClientIdentity,
+		UaaPassword: c.UaaClientPassword,
 		Authority:   "bosh.system_metrics.read",
 	})
 
 	messages := make(chan *definitions.Event, 10000)
 
-	i := ingress.New(*ingressPort, unmarshal.Event, messages)
+	i := ingress.New(c.IngressPort, unmarshal.Event, messages)
 	e := egress.NewServer(messages, tokenChecker)
 
 	grpcServer := grpc.NewServer(
@@ -102,8 +99,8 @@ func main() {
 		fmt.Println("DONE")
 	}()
 
-	go monitor.NewHealth(uint32(*healthPort)).Start()
-	go monitor.NewProfiler(uint32(*pprofPort)).Start()
+	go monitor.NewHealth(uint32(c.HealthPort)).Start()
+	go monitor.NewProfiler(uint32(c.PProfPort)).Start()
 
 	log.Printf("bosh system metrics grpc server listening on %s\n", egressLis.Addr().String())
 	err = grpcServer.Serve(egressLis)
@@ -121,7 +118,7 @@ func newTLSConfig(certFile, keyFile string) (*tls.Config, error) {
 	tlsConfig := &tls.Config{
 		InsecureSkipVerify: false,
 		MinVersion:         tls.VersionTLS12,
-		CipherSuites:       defaultServerCipherSuites,      
+		CipherSuites:       defaultServerCipherSuites,
 	}
 
 	tlsConfig.Certificates = []tls.Certificate{tlsCert}
@@ -143,4 +140,13 @@ func setCACert(tlsConfig *tls.Config, caPath string) error {
 	tlsConfig.RootCAs = caCertPool
 
 	return nil
+}
+
+func getUaaPassword(filePath string) (string, error) {
+	passwordBytes, err := ioutil.ReadFile(filePath)
+	if err != nil {
+		return "", err
+	}
+
+	return string(passwordBytes), nil
 }

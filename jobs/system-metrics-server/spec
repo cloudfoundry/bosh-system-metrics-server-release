@@ -7,6 +7,7 @@ templates:
   server.crt.erb: config/certs/system-metrics/server.crt
   server.key.erb: config/certs/system-metrics/server.key
   run_plugin.sh.erb: bin/bosh-monitor/run.sh
+  config.yml.erb: config/config.yml
 
 packages:
   - system-metrics-server

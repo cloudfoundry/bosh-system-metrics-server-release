@@ -2,7 +2,7 @@
 name: system-metrics-server
 
 dependencies:
-- golang-1.11-linux
+- golang-1.14-linux
 
 files:
 - github.com/cloudfoundry/bosh-system-metrics-server/**/*

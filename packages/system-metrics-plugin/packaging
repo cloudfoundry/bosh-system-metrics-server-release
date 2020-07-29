@@ -1,11 +1,8 @@
 set -ex
 
-source /var/vcap/packages/golang-1.11-linux/bosh/compile.env
+source /var/vcap/packages/golang-1.14-linux/bosh/compile.env
 
 export GO111MODULE=on
-
-mkdir -p cache
-export GOCACHE=cache
 
 cd github.com/cloudfoundry/bosh-system-metrics-server/
 go build -mod=vendor -o ${BOSH_INSTALL_TARGET}/system-metrics-plugin cmd/plugin/main.go
