@@ -1,7 +1,0 @@
-#!/bin/bash
-
-set -ex
-
-pushd src/github.com/cloudfoundry/bosh-system-metrics-server
-go test ./... -race -count 10
-popd
