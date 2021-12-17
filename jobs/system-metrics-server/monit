@@ -1,5 +1,0 @@
-check process system-metrics-server
-  with pidfile /var/vcap/sys/run/system-metrics-server/system-metrics-server.pid
-  start program "/var/vcap/jobs/system-metrics-server/bin/ctl start"
-  stop program "/var/vcap/jobs/system-metrics-server/bin/ctl stop"
-  group vcap
