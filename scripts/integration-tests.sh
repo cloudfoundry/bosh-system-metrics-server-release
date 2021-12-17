@@ -6,7 +6,7 @@ time=$(date +%s%N)
 cf install-plugin "log-cache" -f
 sleep 120
 cf tail bosh-system-metrics-forwarder -n 1000 --json --start-time="${time}" |
-    jq -r '.batch[].gauge.metrics | keys[]' |
+    jq -r '.batch[]?.gauge.metrics | keys[]?' |
     sort -u > /tmp/actual-metrics
 
 cat > /tmp/expected-metrics << EOF
