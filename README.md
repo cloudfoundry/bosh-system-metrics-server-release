@@ -2,6 +2,7 @@
 
 This provides bosh health events (heartbeats and alerts) over a secure grpc stream. The job in this release is intended to be deployed on the Bosh Director. For more info, see [wiki](https://github.com/cloudfoundry/bosh-system-metrics-server-release/wiki)
 
+If you have any questions, or want to get attention for a PR or issue please reach out on the [#logging-and-metrics channel in the cloudfoundry slack](https://cloudfoundry.slack.com/archives/CUW93AF3M)
 
 ## Architecture
 
