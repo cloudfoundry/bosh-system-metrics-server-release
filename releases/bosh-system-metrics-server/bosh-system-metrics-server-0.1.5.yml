@@ -1,0 +1,34 @@
+name: bosh-system-metrics-server
+version: 0.1.5
+commit_hash: 22db0e9
+uncommitted_changes: false
+jobs:
+- name: system-metrics-server
+  version: e47e94f4b07d44b54c42d78473d60d0d6867cc1ee5b1a144baca0a8944de0ab5
+  fingerprint: e47e94f4b07d44b54c42d78473d60d0d6867cc1ee5b1a144baca0a8944de0ab5
+  sha1: sha256:27a6209266a94c65c741e1eaad0a8c52cf481445bc2f40b3c7974fed10441a84
+  packages:
+  - system-metrics-server
+  - system-metrics-plugin
+packages:
+- name: golang-1-linux
+  version: a54b33c812a8cfc39ba82782a23d74bf33f5a0a92012b41a101cc9d9d48d345c
+  fingerprint: a54b33c812a8cfc39ba82782a23d74bf33f5a0a92012b41a101cc9d9d48d345c
+  sha1: sha256:089e88df2a4d69243a14a1adeeb5011deaaf602dedb55d476a83d45f1c03fdc9
+  dependencies: []
+- name: system-metrics-plugin
+  version: 8af89dd877840dae2239c444be4e46aa93c3b966bc4e82195bfd1b1772d43d50
+  fingerprint: 8af89dd877840dae2239c444be4e46aa93c3b966bc4e82195bfd1b1772d43d50
+  sha1: sha256:1407fe6213100799ed411ff3ca4ae3a382178b0c429dbb891104dcc421f4c274
+  dependencies:
+  - golang-1-linux
+- name: system-metrics-server
+  version: 46942fcfe8c64cf3fc8a74f279d2695d88d260e3094808cb58ea3fa2ee9fcff6
+  fingerprint: 46942fcfe8c64cf3fc8a74f279d2695d88d260e3094808cb58ea3fa2ee9fcff6
+  sha1: sha256:648acd80c5f41f7f81619eb618f77d23d22480032c72382240b95e9015466393
+  dependencies:
+  - golang-1-linux
+license:
+  version: b3d3a6be0a737881904a718497cb593042aa0ec56ad91b93934e395a2f9c1a3d
+  fingerprint: b3d3a6be0a737881904a718497cb593042aa0ec56ad91b93934e395a2f9c1a3d
+  sha1: sha256:83837295db55c90c2b29aa1716cf78361329a17904c6059631e3c6f5a598dcd9
