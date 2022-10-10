@@ -1,15 +1,4 @@
-# Bosh System Metrics Server Release
-
-This provides bosh health events (heartbeats and alerts) over a secure grpc stream. The job in this release is intended to be deployed on the Bosh Director. For more info, see [wiki](https://github.com/cloudfoundry/bosh-system-metrics-server-release/wiki)
-
-If you have any questions, or want to get attention for a PR or issue please reach out on the [#logging-and-metrics channel in the cloudfoundry slack](https://cloudfoundry.slack.com/archives/CUW93AF3M)
-
-## Architecture
-
-![architecture dig][diagram]
-
-### Plugin
-
+# Bo
 The plugin is compatible with [Bosh HM's json plugin][json plugin]. It reads bosh system health events via stdin and streams them to the **Server** via tcp. It is not managed by monit. However, if this plugin does fail, bosh HM's json plugin will restart it.
 
 ### Server
