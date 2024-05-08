@@ -2,7 +2,7 @@ module github.com/cloudfoundry/bosh-system-metrics-server
 
 go 1.21.0
 
-toolchain go1.21.9
+toolchain go1.21.10
 
 require (
 	github.com/golang/protobuf v1.5.4
