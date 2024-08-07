@@ -1,3 +1,5 @@
+**Deprecated**: Replaced by [system-metrics](https://github.com/cloudfoundry/system-metrics-release) and [system-metrics-scraper](https://github.com/cloudfoundry/system-metrics-scraper-release).
+
 # Bosh System Metrics Server Release
 
 This provides bosh health events (heartbeats and alerts) over a secure grpc stream. The job in this release is intended to be deployed on the Bosh Director. For more info, see [wiki](https://github.com/cloudfoundry/bosh-system-metrics-server-release/wiki)
