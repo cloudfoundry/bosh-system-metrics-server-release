@@ -1,11 +1,12 @@
 package unmarshal_test
 
 import (
+	"fmt"
 	"testing"
 
-	. "github.com/onsi/gomega"
 	"github.com/cloudfoundry/bosh-system-metrics-server/pkg/definitions"
 	"github.com/cloudfoundry/bosh-system-metrics-server/pkg/unmarshal"
+	. "github.com/onsi/gomega"
 )
 
 func TestHeartbeatConversion(t *testing.T) {
@@ -43,7 +44,7 @@ func TestHeartbeatConversion(t *testing.T) {
              }
           },
           "load":[
-			 "",
+             "",
              "0.18",
              "0.23",
              "0.29"
@@ -147,7 +148,7 @@ func TestHeartbeatConversion_WithEmptyFields(t *testing.T) {
 				Index:      0,
 				InstanceId: "",
 				JobState:   "",
-				Metrics: []*definitions.Heartbeat_Metric{},
+				Metrics:    []*definitions.Heartbeat_Metric{},
 			},
 		},
 	}))
@@ -157,7 +158,7 @@ func TestAlertConversion(t *testing.T) {
 	RegisterTestingT(t)
 
 	var alertJSON = []byte(`
-		{
+        {
            "kind":"alert",
            "id":"93eb25a4-9348-4232-6f71-69e1e01081d7",
            "severity":4,
@@ -197,4 +198,48 @@ func TestInvalidEvent(t *testing.T) {
 
 	Expect(heartbeat).To(BeNil())
 	Expect(err).To(HaveOccurred())
+}
+
+func TestInvalidIndex(test *testing.T) {
+	RegisterTestingT(test)
+
+	heartbeatJSON := []byte(`
+    {
+       "kind":"heartbeat",
+       "id":"some-id",
+       "timestamp":1499293724,
+       "deployment":"some-deployment",
+       "agent_id":"some-agent-id",
+       "job":"some-job",
+       "index":"invalid-index",
+       "instance_id":"some-instance-id",
+       "job_state":"some-job-state"
+    }
+    `)
+
+	heartbeat, err := unmarshal.Event(heartbeatJSON)
+	Expect(heartbeat).To(BeNil())
+	Expect(err).To(HaveOccurred())
+}
+
+func TestIntegerOverFlowIndex(test *testing.T) {
+	RegisterTestingT(test)
+
+	heartbeatJSON := []byte(`
+    {
+       "kind":"heartbeat",
+       "id":"some-id",
+       "timestamp":1499293724,
+       "deployment":"some-deployment",
+       "agent_id":"some-agent-id",
+       "job":"some-job",
+       "index":"10000000000000",
+       "instance_id":"some-instance-id",
+       "job_state":"some-job-state"
+    }
+    `)
+
+	heartbeat, err := unmarshal.Event(heartbeatJSON)
+	Expect(heartbeat).To(BeNil())
+	Expect(fmt.Sprint(err)).To(ContainSubstring("integer overflow detected"))
 }
